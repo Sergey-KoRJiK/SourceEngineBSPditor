@@ -1,0 +1,4 @@
+for add resize ligthmap function - need add function for resize BSP map - make re-save each lump. 
+lump 35 or "Game lump" contain offsets to raw data relative begining of BSP file.
+If need resize BSP -> need shift lumps -> need recalculate offsets to raw data in lump 35.
+ ### Also need share source code if exists other lumps that hame same problem as lump 35. - checked, only lump 35 have this problem.

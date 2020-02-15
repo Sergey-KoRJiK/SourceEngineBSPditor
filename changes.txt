@@ -1,0 +1,19 @@
+Version 1.0.0:
+	first build
+	
+Version 1.0.1:
+	add support HDR Lightmaps
+	add change HDR\LDR by key "G"
+	delete global HDR Ratio
+	add HDR Ratio for each styles and HDR\LDR Lightmaps
+	fix camera speed (new timer)
+	fix null Lightmaps TexCoord array for displaments
+	
+Versiom 1.0.2:
+	fix problems
+	
+Versiom 1.0.3:
+	Add editor of Leaf Ambient Lighting: Color and Position
+	Add simple reconstrution of Ambient light at any position in gamma space
+	Fixed change gamma correction for lightmap at 1/2.2
+	

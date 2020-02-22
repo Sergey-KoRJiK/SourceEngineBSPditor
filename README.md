@@ -29,7 +29,7 @@ render is disabled. BSP render only by aviable leaf Visibility Table,
 while camera in any leaf, contain faces.
 Don't support camera collision with Faces.
 
-Leaf ambient render only current camera Leaf.
+- Leaf ambient render only current camera Leaf.
 
 Select Face: click by right mouse button on 2d window on interest 
 visible lightmap. And on right Face toolbar showed Face info and
@@ -43,7 +43,7 @@ color square (opened color dialog menu) or by enter color component in edit fiel
 and press button "apply". 
 Selected cubes showes with green wireframe cell.
 
-LIGHTMAP AMBIENT COLOR PRE-SCALE BY 256.0 FOR RENDER IN SCENCE.
+### LIGHTMAP AMBIENT COLOR PRE-SCALE BY 256.0 FOR RENDER IN SCENCE.
 
 In Option up toolbar u can select which Faces need render 
 (World Brush\ Entity Brush \ Displacement) and select

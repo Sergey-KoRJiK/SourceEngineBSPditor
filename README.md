@@ -1,12 +1,12 @@
-// Copyright (c) 2019 Sergey Smolovsky, Belarus
-// email: sergeysmol4444@mail.ru
+Copyright (c) 2019 Sergey Smolovsky, Belarus
+e-mail: sergeysmol4444@mail.ru
 
-LICENSE of this project in thirdpartylegalnotices.txt 
-
-This program created for Edit Lightmaps and Ambient Lighting of Source Engine 2013 BSP.
+# This program created for Edit Lightmaps and Ambient Lighting of Source Engine 2013 BSP.
 Support import and export Lightmap textures on Face\Displacement
 to *.hdr (for HDRShop, HDRSee, Photoshop with work them like 
 HDR Images) for each Styles on Face. 
+
+### For download compiled standalone tool, click [here](https://github.com/Sergey-KoRJiK/SourceEngineBSPditor/raw/master/SourceEngineMapViewer.exe)
 
 The main goal - Color\Pixel Correction of calculated light after VRAD
 (bad color, bad black pixel, ... for fun color change). 

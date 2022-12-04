@@ -1,6 +1,6 @@
 unit UnitNode;
 
-// Copyright (c) 2019 Sergey Smolovsky, Belarus
+// Copyright (c) 2019 Sergey-KoRJiK, Belarus
 
 // NODE Tree LUMP
 

@@ -1,6 +1,6 @@
 unit UnitTexture;
 
-// Copyright (c) 2019 Sergey Smolovsky, Belarus
+// Copyright (c) 2019 Sergey-KoRJiK, Belarus
 
 // For render Lightmap Textures
 

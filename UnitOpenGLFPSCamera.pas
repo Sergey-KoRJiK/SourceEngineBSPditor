@@ -1,6 +1,6 @@
 unit UnitOpenGLFPSCamera;
 
-// Copyright (c) 2019 Sergey Smolovsky, Belarus
+// Copyright (c) 2019 Sergey-KoRJiK, Belarus
 
 // First Person View OpenGL Camera class
 

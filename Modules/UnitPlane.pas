@@ -1,6 +1,6 @@
 unit UnitPlane;
 
-// Copyright (c) 2019 Sergey Smolovsky, Belarus
+// Copyright (c) 2019 Sergey-KoRJiK, Belarus
 
 // Plane LUMP doterminate and functions for work with them
 

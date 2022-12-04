@@ -1,6 +1,6 @@
 unit UnitToneMapControl;
 
-// Copyright (c) 2019 Sergey Smolovsky, Belarus
+// Copyright (c) 2019 Sergey-KoRJiK, Belarus
 
 // Used for Linear ToneMap HDR to LDR of Lightmaps in 3D pre-view;
 

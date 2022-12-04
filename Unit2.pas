@@ -1,6 +1,6 @@
 unit Unit2;
 
-// Copyright (c) 2019 Sergey Smolovsky, Belarus
+// Copyright (c) 2019 Sergey-KoRJiK, Belarus
 
 // Unit of Face Tool Form
 

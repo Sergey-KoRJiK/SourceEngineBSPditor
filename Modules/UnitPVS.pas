@@ -1,6 +1,6 @@
 unit UnitPVS;
 
-// Copyright (c) 2019 Sergey Smolovsky, Belarus
+// Copyright (c) 2019 Sergey-KoRJiK, Belarus
 
 // functions for unpack Leaf Visibility LUMP in BSP
 

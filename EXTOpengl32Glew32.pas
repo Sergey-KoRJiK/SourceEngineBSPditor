@@ -1,6 +1,6 @@
 unit EXTOpengl32Glew32;
 
-// Copyright (c) 2019 Sergey Smolovsky, Belarus
+// Copyright (c) 2019 Sergey-KoRJiK, Belarus
 // 
 // Additional Opengl functions
 
@@ -57,7 +57,7 @@ const
   GL_ACTIVE_UNIFORMS = 35718;
   GL_ACTIVE_UNIFORM_MAX_LENGTH = 35719;
 
-  // Äëÿ glInterleavedArray
+  // Ã„Ã«Ã¿ glInterleavedArray
   GL_T2F_V3F = 10791;
   { type record
       TexCoord_0: array[0..1] of GLfloat;

@@ -1,6 +1,6 @@
 unit Unit3;
 
-// Copyright (c) 2019 Sergey Smolovsky, Belarus
+// Copyright (c) 2019 Sergey-KoRJiK, Belarus
 
 // Unit of Ambient Tool Form
 

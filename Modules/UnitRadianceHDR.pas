@@ -1,6 +1,6 @@
 unit UnitRadianceHDR;
 
-// Copyright (c) 2019 Sergey Smolovsky, Belarus
+// Copyright (c) 2019 Sergey-KoRJiK, Belarus
 
 // For import\export Lightmap BSP data to *.hdr Radiance RGBE image format
 // http://radsite.lbl.gov/radiance/refer/filefmts.pdf

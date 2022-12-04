@@ -1,6 +1,6 @@
 unit UnitVec;
 
-// Copyright (c) 2019 Sergey Smolovsky, Belarus
+// Copyright (c) 2019 Sergey-KoRJiK, Belarus
 
 // Base Module, that contain Vector, BBOX and Ray determinate 
 // and functions for work with them.
@@ -185,7 +185,7 @@ procedure MapLocalPointInBBOXf(const lpBBOXf: PBBOXf; const lpLocPoint, lpWorldP
 
 // NVIDIA realization:
 // Majercik, Crassin, Shirley, McGuire, A Ray-Box Intersection Algorithm,
-// Journal of Computer Graphics Techniques (JCGT), vol. 7, no. 3, 66–81, 2018
+// Journal of Computer Graphics Techniques (JCGT), vol. 7, no. 3, 66â€“81, 2018
 // http://jcgt.org/published/0007/03/04/
 // Listing 1
 function isNotRayIntersectionBBOX(const lpBBOXf: PBBOXf; const lpRay: PRay): Boolean;
@@ -951,7 +951,7 @@ begin
   {$R-}
   // NVIDIA realization:
   // Majercik, Crassin, Shirley, McGuire, A Ray-Box Intersection Algorithm,
-  // Journal of Computer Graphics Techniques (JCGT), vol. 7, no. 3, 66–81, 2018
+  // Journal of Computer Graphics Techniques (JCGT), vol. 7, no. 3, 66â€“81, 2018
   // http://jcgt.org/published/0007/03/04/
   // Listing 1:
   (*

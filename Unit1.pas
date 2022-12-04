@@ -1,6 +1,6 @@
 unit Unit1;
 
-// Copyright (c) 2019 Sergey Smolovsky, Belarus
+// Copyright (c) 2019 Sergey-KoRJiK, Belarus
 
 // Unit of Main 3d Form
 // TMainForm.Paint - Render Scence 
@@ -208,8 +208,8 @@ const
     'For change ambient color click in color rect'  + LF +
     ' or directly enter value in field and press "apply"'  + LF +
     'Additional info showed in bottom Status Bar';
-  AboutStr: ShortString = 'Copyright (c) 2019 Sergey Smolovsky, Belarus' + LF +
-    'email: sergeysmol4444@mail.ru' + LF +
+  AboutStr: ShortString = 'Copyright (c) 2019 Sergey-KoRJiK, Belarus' + LF +
+    'github.com/Sergey-KoRJiK' + LF +
     'Source Engine BSP 3D OpenGL Lightmap Editor' + LF +
     'Program version: 1.0.4' + LF +
     'Version of you OpenGL: ';

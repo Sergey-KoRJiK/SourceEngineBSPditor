@@ -1,5 +1,4 @@
-Copyright (c) 2019 Sergey Smolovsky, Belarus
-e-mail: sergeysmol4444@mail.ru
+Copyright (c) 2019 Sergey-KoRJiK, Belarus
 
 # This program created for Edit Lightmaps and Ambient Lighting of Source Engine 2013 BSP.
 Support import and export Lightmap textures on Face\Displacement

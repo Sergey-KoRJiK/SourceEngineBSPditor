@@ -16,4 +16,15 @@ Versiom 1.0.3:
 	Add editor of Leaf Ambient Lighting: Color and Position
 	Add simple reconstrution of Ambient light at any position in gamma space
 	Fixed change gamma correction for lightmap at 1/2.2
-	
+
+ReVersion 1.1.0:
+	Total revision from zero. Version 1.1.0 only map view (no edit)
+	Render upgrade to OpenGL 3.3 with shaders. HDR\LDR tonemap
+	Lightmap atlas 1024x1024, Atlas preview
+	Lightmap exposure realtime slider
+	Entity BModel\Trigger draw toggle
+	Face select info
+	PVS of clusters instead of leafs
+	light styles preview (without accum)
+	BBOX leaf preview.
+	No displacement (in process)

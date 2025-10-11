@@ -15,6 +15,7 @@ uses
   UnitUserTypes,
   UnitVec,
   UnitEntity,
+  UnitDispMisc,
   Dialogs;
 
 
@@ -241,8 +242,8 @@ const SIZEOF_FACE = SizeOf(tFace);
 
 // 8 LUMP_LIGHTMAPSLDR
 const LUMP_LIGHTMAPSLDR_VERS: array[0..0] of Byte = (1);
-// LightmapBSP declared in UnitUserTypes
-const SIZEOF_LIGHTMAP = SizeOf(tLightmapBSP);
+// Lightmap declared in UnitUserTypes
+const SIZEOF_LIGHTMAP = SizeOf(tLightmap);
 
 
 // 9 LUMP_OCCLUSION
@@ -953,8 +954,9 @@ type tFaceExt = packed record
     EntityId    : Integer;
     TexInfoId   : array[0..1] of Integer;
     pTexName    : PChar;    // direct ptr to lump with text data
+    pDispExt    : Pointer;
 
-    LmpDataFirst: array[0..1] of Integer;
+    LmpByteFirst: array[0..1] of Integer;
     LmpSz       : array[0..1] of tVec2s;  // size of non-bump region
     LmpArea     : array[0..1] of Integer; // area of non-bump region
     nStyles     : array[0..1] of Integer;
@@ -962,8 +964,7 @@ type tFaceExt = packed record
 
     TexRenderId : array[0..1] of Integer; // 2D Basetexture Id
     LmpMegaId   : array[0..1] of Integer; // 2D Lightmap Megatexture Id
-    LmpRegionId : array[0..1,0..3] of Integer; // per style
-    LmpStyleOfs : array[0..1,0..3] of tVec2f; 
+    LmpRegionId : array[0..1] of Integer; // per style
 
     iFirst      : GLint;      // both for LDR/HDR
     iCount      : GLsizei;    // both for LDR/HDR
@@ -1012,13 +1013,27 @@ type tLeafExt = packed record
 type PLeafExt = ^tLeafExt;
 type ALeafExt = array of tLeafExt;
 
-// there are up to 32768 leafs in BSP (look Node LUMP definition)
-{type tFaceLeafIndex = packed record
-    nLeaf: SmallInt;  // natural-order leaf id
-    nFace: Word;      // global face id in Map.vFaces
-  end; // 4 Bytes
-type PFaceLeafIndex = ^tFaceLeafIndex;
-type AFaceLeafIndex = array of tFaceLeafIndex;  //}
+type tDispExt = record
+    nPower      : Integer;
+    nSize       : Integer;
+    nSqrSize    : Integer;
+    nTriangles  : Integer;
+
+    iFirst      : GLint;
+    iCount      : GLsizei;
+    iLast       : GLint;
+
+    vBBOX       : tBBOX3f;
+    vOrigin     : tVec3f;
+    vBase       : array[0..3] of tVec3f;
+    vLmpUV      : array[0..1,0..3] of tVec2f;
+    iBase       : Integer;
+    pRefFace    : PFaceExt;
+    bValid      : Boolean;
+  end;
+type PDispExt = ^tDispExt;
+type ADispExt = array of tDispExt;
+
 
 type tBModelExt = packed record
     vBBOX       : tBBOX3f;
@@ -1045,19 +1060,23 @@ type tMapBSP = packed record
     vNodes          : ANodeExt;
     vLeafs          : ALeafExt;
     vBModels        : ABModelExt;
-    vLightmapsLDR   : ALightmap;
-    vLightmapsHDR   : ALightmap;
+    vLightmaps      : array[0..1] of AByte;
 
     VisHdr          : tVisHdr;
 
     vLeafFaces      : AWord;
     vFaces          : AFaceExt; // natural-order
-    vFaceVertices   : AVec3f; // size = count of faces in map
-    vFaceTexUV      : AVec2f; // size = count of faces in map
-    vFaceLmpUV      : array[0..1] of AVec2f; // size = count of faces in map
+    vFaceVertices   : AVec3f;
+    vFaceTexUV      : AVec2f;
+    vFaceLmpUV      : array[0..1] of AVec2f;
+    vFaceLmpCAPS    : array[0..1] of AVec4f; // vec4(LmpSize.xy, nBump, nStyles)
+
+    vDisps          : ADispExt;
+    vDispVertAlpha  : AVec4f; // XYZ = final vertices, W = disp alpha
 
     bLDR, bHDR      : Boolean;
     nTotalFaceVertex: Integer; // both for LDR/HDR
+    nTotalDispVertex: Integer; // both for LDR/HDR
 
     nHeadWorldspawn : Integer; // RootNode for map
     isMapLoadOK     : Boolean;
@@ -1080,7 +1099,6 @@ function UnPackPVS(
   const PackedPVS: PByte;
   const UnPackedPVS: PByteBool;
   const CountPVS, PackedSize: Integer): Integer;
-procedure UnZipBoolPVS(const SrcZipBool: PByte; const DstBoolSet: PByteBool; const DstSize: Integer);
 function GetLeafIndexByPointAsm(const RootNodeExt: PNodeExt; const Point: tVec3f): Integer;
 
 
@@ -1161,105 +1179,6 @@ begin
 end;
 
 
-// encode (zip) bool set by next rules:
-// u=0x00 -> "True"  (1 value)
-// u=0x01..0xFE -> next "u" values is "False", 1..254
-// u=0xFF -> end of zip, next all is "False"
-function ZipBoolPVS(
-  const SrcBoolSet: PByteBool;
-  const DstZipBool: PByte;
-  const SrcSize: Integer): Integer;
-var
-  i, j, rep, len, irep, frep: Integer;
-  val: Boolean;
-begin
-  {$R-}
-  len:=0; // size of encoded set
-  rep:=0; // count of False repeats
-  for i:=0 to SrcSize-1 do
-    begin
-      val:=AByteBool(SrcBoolSet)[i];
-      if (val = False) then Inc(rep) else
-        begin
-          if (rep > 0) then
-            begin
-              // prev was "False", write it repeats
-              irep:=rep div $FE;
-              frep:=rep mod $FE;
-
-              for j:=0 to irep-1 do AByte(DstZipBool)[len+j]:=$FE;
-              Inc(len, irep);
-              if (frep > 0) then
-                begin
-                  AByte(DstZipBool)[len]:=frep;
-                  Inc(len);
-                end;
-            end;
-          // in else case, prev was "True"
-          
-          // now write "True"
-          AByte(DstZipBool)[len]:=$00;
-          Inc(len);
-
-          // Clear repeats
-          rep:=0;
-        end;
-    end;
-
-  if (rep > 0) then
-    begin
-      // prev was "False", last entry was "False", no more next "True"
-      // write EOF marker
-      AByte(DstZipBool)[len]:=$FF;
-      Inc(len);
-    end;
-
-  Result:=len;
-  {$R+}
-end;
-
-// decode (zip) bool set by next rules:
-// u=0x00 -> "True"  (1 value)
-// u=0x01..0xFE -> next "u" values is "False", 1..254
-// u=0xFF -> end of zip, next all is "False"
-procedure UnZipBoolPVS(
-  const SrcZipBool: PByte;
-  const DstBoolSet: PByteBool;
-  const DstSize: Integer);
-var
-  i, j, k, val: Integer;
-begin
-  {$R-}
-  i:=0;
-  j:=0;
-  while (j < DstSize) do
-    begin
-      val:=AByte(SrcZipBool)[i];
-      if (val = $FF) then
-        begin
-          // EOF-marker found
-          for k:=0 to DstSize-j-1 do AByteBool(DstBoolSet)[j+k]:=False;
-          Exit;
-        end;
-      if (val = $00) then
-        begin
-          AByteBool(DstBoolSet)[j]:=True;
-          Inc(j);
-        end
-      else
-        begin
-          for k:=0 to val-1 do AByteBool(DstBoolSet)[j+k]:=False;
-          Inc(j, val);
-        end;
-      Inc(i);
-    end;
-  {$R+}
-end;
-
-
-
-
-
 procedure FreeMapBSP(const Map: PMapBSP);
 var
   i: Integer;
@@ -1270,6 +1189,7 @@ begin
   Map.bLDR:=False;
   Map.bHDR:=False;
   Map.nTotalFaceVertex:=0;
+  Map.nTotalDispVertex:=0;
 
   Map.VisHdr.nClusters:=0;
   SetLength(Map.VisHdr.vOffsets, 0);  Map.VisHdr.vOffsets:=nil;
@@ -1288,15 +1208,20 @@ begin
   SetLength(Map.vNodes, 0);         Map.vNodes:=nil;
   SetLength(Map.vLeafs, 0);         Map.vLeafs:=nil;
   SetLength(Map.vBModels, 0);       Map.vBModels:=nil;
-  SetLength(Map.vLightmapsLDR, 0);  Map.vLightmapsLDR:=nil;
-  SetLength(Map.vLightmapsHDR, 0);  Map.vLightmapsHDR:=nil;
-  //SetLength(Map.vLeafFaceIDs, 0);   Map.vLeafFaceIDs:=nil;
+  SetLength(Map.vLightmaps[FACEDRAW_LDR], 0);  Map.vLightmaps[FACEDRAW_LDR]:=nil;
+  SetLength(Map.vLightmaps[FACEDRAW_HDR], 0);  Map.vLightmaps[FACEDRAW_HDR]:=nil;
+
   SetLength(Map.vLeafFaces, 0);     Map.vLeafFaces:=nil;
   SetLength(Map.vFaces, 0);         Map.vFaces:=nil;
   SetLength(Map.vFaceVertices, 0);  Map.vFaceVertices:=nil;
   SetLength(Map.vFaceTexUV, 0);     Map.vFaceTexUV:=nil;
   SetLength(Map.vFaceLmpUV[FACEDRAW_LDR], 0); Map.vFaceLmpUV[FACEDRAW_LDR]:=nil;
   SetLength(Map.vFaceLmpUV[FACEDRAW_HDR], 0); Map.vFaceLmpUV[FACEDRAW_HDR]:=nil;
+  SetLength(Map.vFaceLmpCAPS[FACEDRAW_LDR], 0); Map.vFaceLmpCAPS[FACEDRAW_LDR]:=nil;
+  SetLength(Map.vFaceLmpCAPS[FACEDRAW_HDR], 0); Map.vFaceLmpCAPS[FACEDRAW_HDR]:=nil;
+
+  SetLength(Map.vDisps, 0);         Map.vDisps:=nil;
+  SetLength(Map.vDispVertAlpha, 0); Map.vDispVertAlpha:=nil;
 
   ZeroFillChar(@Map.hdr, MAP_HEADER_SIZE);
   {$R+}
@@ -1321,18 +1246,18 @@ begin
   {$R+}
 end;
 
-function LoadBSPFromFile(const FileName: String; const Map: PMapBSP): boolean;
-  procedure ClearTempLumpsData(const vLumpsData: PByte);
-  type APByte = array of PByte;
-  var
-    i: Integer;
-  begin
-    {$R-}
-    for i:=0 to HEADER_LUMPS-1 do
-      if (APByte(vLumpsData)[i] <> nil) then SysFreeMem(APByte(vLumpsData)[i]);
-    {$R+}
-  end;
+procedure ClearTempLumpsData(const vLumpsData: PByte);
+type APByte = array of PByte;
+var
+  i: Integer;
+begin
+  {$R-}
+  for i:=0 to HEADER_LUMPS-1 do
+    if (APByte(vLumpsData)[i] <> nil) then SysFreeMem(APByte(vLumpsData)[i]);
+  {$R+}
+end;
 
+function LoadBSPFromFile(const FileName: String; const Map: PMapBSP): boolean;
 var
   i, j, k, fsz : Integer;
   MapFile   : File;
@@ -1347,6 +1272,7 @@ var
   nLeafFaces: Integer;
   nNodes    : Integer;
   nBModels  : Integer;
+  nDisps    : Integer;
   nFacesLDR : Integer;
   nFacesHDR : Integer;
   nFaces    : Integer;
@@ -1366,6 +1292,8 @@ var
   LmpIdLDR  : Integer;
   LmpIdHDR  : Integer;
   tmpVec3f  : tVec3f;
+  tmpVec2f  : tVec2f;
+  pDVec     : PDispVert;
   pent      : PEntity;
 begin
   {$R-}
@@ -1683,18 +1611,12 @@ begin
   if  isLumpCanLoad(@Map.hdr.Lump[LUMP_LIGHTMAPSLDR], LUMP_LIGHTMAPSLDR_VERS)
       and (nFacesLDR > 0) then
     begin
-      nLmpsLDR:=Map.hdr.Lump[LUMP_LIGHTMAPSLDR].nLen div SIZEOF_LIGHTMAP;
+      nLmpsLDR:=Map.hdr.Lump[LUMP_LIGHTMAPSLDR].nLen;
       if (nLmpsLDR > 0) then
         begin
-          SetLength(Map.vLightmapsLDR, nLmpsLDR);
+          SetLength(Map.vLightmaps[FACEDRAW_LDR], nLmpsLDR);
           Seek(MapFile, Map.hdr.Lump[LUMP_LIGHTMAPSLDR].nOfs);
-          BlockRead(MapFile, Map.vLightmapsLDR[0], nLmpsLDR*SIZEOF_LIGHTMAP);
-
-          // make fix from tLightmapBSP to tLightmap
-          for i:=0 to nLmpsLDR-1 do
-            begin
-              Map.vLightmapsLDR[i].e:=(Map.vLightmapsLDR[i].e + 128) AND 255;
-            end;
+          BlockRead(MapFile, Map.vLightmaps[FACEDRAW_LDR][0], nLmpsLDR);
         end;
     end;
   if (Map.bLDR) then Map.bLDR:=Boolean(nLmpsLDR > 0);
@@ -1702,20 +1624,37 @@ begin
   if  isLumpCanLoad(@Map.hdr.Lump[LUMP_LIGHTMAPSHDR], LUMP_LIGHTMAPSHDR_VERS)
       and (nFacesHDR > 0) then
     begin
-      nLmpsHDR:=Map.hdr.Lump[LUMP_LIGHTMAPSHDR].nLen div SIZEOF_LIGHTMAP;
+      nLmpsHDR:=Map.hdr.Lump[LUMP_LIGHTMAPSHDR].nLen;
       if (nLmpsHDR > 0) then
         begin
-          SetLength(Map.vLightmapsHDR, nLmpsHDR);
+          SetLength(Map.vLightmaps[FACEDRAW_HDR], nLmpsHDR);
           Seek(MapFile, Map.hdr.Lump[LUMP_LIGHTMAPSHDR].nOfs);
-          BlockRead(MapFile, Map.vLightmapsHDR[0], nLmpsHDR*SIZEOF_LIGHTMAP);
-          // make fix from tLightmapBSP to tLightmap
-          for i:=0 to nLmpsHDR-1 do
-            begin
-              Map.vLightmapsHDR[i].e:=(Map.vLightmapsHDR[i].e + 128) AND 255;
-            end;
+          BlockRead(MapFile, Map.vLightmaps[FACEDRAW_HDR][0], nLmpsHDR);
         end;
     end;
   if (Map.bHDR) then Map.bHDR:=Boolean(nLmpsHDR > 0);
+
+  // 4.3 Read displacements
+  if  isLumpCanLoad(@Map.hdr.Lump[LUMP_DISPINFO], LUMP_DISPINFO_VERS)
+    AND isLumpCanLoad(@Map.hdr.Lump[LUMP_DISPVERTEX], LUMP_DISPVERTEX_VERS)  then
+    begin
+      nDisps:=Map.hdr.Lump[LUMP_DISPINFO].nLen div SIZEOF_DISPINFO;
+      if (nDisps > 0) then
+        begin
+          Seek(MapFile, Map.hdr.Lump[LUMP_DISPINFO].nOfs);
+          Lumps[LUMP_DISPINFO]:=SysGetMem(Map.hdr.Lump[LUMP_DISPINFO].nLen);
+          BlockRead(MapFile, Lumps[LUMP_DISPINFO]^, Map.hdr.Lump[LUMP_DISPINFO].nLen);
+
+          Seek(MapFile, Map.hdr.Lump[LUMP_DISPVERTEX].nOfs);
+          Lumps[LUMP_DISPVERTEX]:=SysGetMem(Map.hdr.Lump[LUMP_DISPVERTEX].nLen);
+          BlockRead(MapFile, Lumps[LUMP_DISPVERTEX]^, Map.hdr.Lump[LUMP_DISPVERTEX].nLen);
+
+          SetLength(Map.vDisps, nDisps);
+          ZeroFillChar(@Map.vDisps[0], nDisps*SizeOf(tDispExt));
+
+          InitDispTriangleIndexTable();
+        end;
+    end;
 
   // 5. Next form Ext data
   // 5.1 compute Node tree (NodeExt's)
@@ -1813,19 +1752,21 @@ begin
     begin
       nFaces:=nFacesLDR;
       SetLength(Map.vFaceLmpUV[FACEDRAW_LDR], Map.nTotalFaceVertex);
+      SetLength(Map.vFaceLmpCAPS[FACEDRAW_LDR], Map.nTotalFaceVertex);
       ZeroFillChar(@Map.vFaceLmpUV[FACEDRAW_LDR][0], Map.nTotalFaceVertex*SizeOf(tVec2f));
+      ZeroFillChar(@Map.vFaceLmpCAPS[FACEDRAW_LDR][0], Map.nTotalFaceVertex*SizeOf(tVec4f));
     end;
   if (Map.bHDR) then
     begin
       nFaces:=nFacesHDR;
       SetLength(Map.vFaceLmpUV[FACEDRAW_HDR], Map.nTotalFaceVertex);
+      SetLength(Map.vFaceLmpCAPS[FACEDRAW_HDR], Map.nTotalFaceVertex);
       ZeroFillChar(@Map.vFaceLmpUV[FACEDRAW_HDR][0], Map.nTotalFaceVertex*SizeOf(tVec2f));
+      ZeroFillChar(@Map.vFaceLmpCAPS[FACEDRAW_HDR][0], Map.nTotalFaceVertex*SizeOf(tVec4f));
     end;
-  //SetLength(Map.vLeafFaceIDs, nFaces);
   SetLength(Map.vFaces, nFaces);
   SetLength(Map.vFaceVertices, Map.nTotalFaceVertex);
   SetLength(Map.vFaceTexUV, Map.nTotalFaceVertex);
-  //FillChar(Map.vLeafFaceIDs[0], nFaces*SizeOf(tFaceLeafIndex), -1);
   ZeroFillChar(@Map.vFaceVertices[0], Map.nTotalFaceVertex*SizeOf(tVec3f));
   ZeroFillChar(@Map.vFaceTexUV[0], Map.nTotalFaceVertex*SizeOf(tVec2f));
   ZeroFillChar(@Map.vFaces[0], nFaces*SizeOf(tFaceExt));
@@ -1857,6 +1798,7 @@ begin
 				end;
 
       pfe.nDispId:=pfoRef.nDispID;
+      pfe.pDispExt:=nil;
 
 			pfe.isNotRender[FACEDRAW_LDR]:=True;
 			pfe.isDummyLmp[FACEDRAW_LDR]:=True;
@@ -1908,7 +1850,7 @@ begin
 
 			if (pfe.isDummyLmp[FACEDRAW_LDR] = False) then
 				begin
-					pfe.LmpDataFirst[FACEDRAW_LDR]:=pfoLDR.nLightmapOfs div SizeOf(tLightmap);
+					pfe.LmpByteFirst[FACEDRAW_LDR]:=pfoLDR.nLightmapOfs;
 					pfe.LmpSz[FACEDRAW_LDR].x:=pfoLDR.vLmpSize.x + 1;
 					pfe.LmpSz[FACEDRAW_LDR].y:=pfoLDR.vLmpSize.y + 1;
 					pfe.LmpArea[FACEDRAW_LDR]:=pfe.LmpSz[FACEDRAW_LDR].x*pfe.LmpSz[FACEDRAW_LDR].y;
@@ -1931,7 +1873,7 @@ begin
 
 			if (pfe.isDummyLmp[FACEDRAW_HDR] = False) then
 				begin
-					pfe.LmpDataFirst[FACEDRAW_HDR]:=pfoHDR.nLightmapOfs div SizeOf(tLightmap);
+					pfe.LmpByteFirst[FACEDRAW_HDR]:=pfoHDR.nLightmapOfs;
 					pfe.LmpSz[FACEDRAW_HDR].x:=pfoHDR.vLmpSize.x + 1;
 					pfe.LmpSz[FACEDRAW_HDR].y:=pfoHDR.vLmpSize.y + 1;
 					pfe.LmpArea[FACEDRAW_HDR]:=pfe.LmpSz[FACEDRAW_HDR].x*pfe.LmpSz[FACEDRAW_HDR].y;
@@ -2018,6 +1960,16 @@ begin
 							Map.vFaceLmpUV[FACEDRAW_LDR][j + pfe.iFirst].y:=(
                 DotVec3f4f(tmpVec3f, ptexLDR.vLmpST[1]) - pfoLDR.vLmpMin.y
               );
+
+              if (pfe.isDummyLmp[FACEDRAW_LDR] = False) then
+                begin
+                  Map.vFaceLmpCAPS[FACEDRAW_LDR][j + pfe.iFirst].x:=pfe.LmpSz[FACEDRAW_LDR].x;
+                  Map.vFaceLmpCAPS[FACEDRAW_LDR][j + pfe.iFirst].y:=pfe.LmpSz[FACEDRAW_LDR].y;
+                  if pfe.isBump[FACEDRAW_LDR]
+                  then Map.vFaceLmpCAPS[FACEDRAW_LDR][j + pfe.iFirst].z:=4
+                  else Map.vFaceLmpCAPS[FACEDRAW_LDR][j + pfe.iFirst].z:=1;
+                  Map.vFaceLmpCAPS[FACEDRAW_LDR][j + pfe.iFirst].w:=pfe.nStyles[FACEDRAW_LDR];
+                end;
 						end;
 					if (ptexHDR <> nil) and (not pfe.isDummyLmp[FACEDRAW_HDR]) then
 						begin
@@ -2027,6 +1979,16 @@ begin
 							Map.vFaceLmpUV[FACEDRAW_HDR][j + pfe.iFirst].y:=(
                 DotVec3f4f(tmpVec3f, ptexHDR.vLmpST[1]) - pfoHDR.vLmpMin.y
               );
+
+              if (pfe.isDummyLmp[FACEDRAW_HDR] = False) then
+                begin
+                  Map.vFaceLmpCAPS[FACEDRAW_HDR][j + pfe.iFirst].x:=pfe.LmpSz[FACEDRAW_HDR].x;
+                  Map.vFaceLmpCAPS[FACEDRAW_HDR][j + pfe.iFirst].y:=pfe.LmpSz[FACEDRAW_HDR].y;
+                  if pfe.isBump[FACEDRAW_HDR]
+                  then Map.vFaceLmpCAPS[FACEDRAW_HDR][j + pfe.iFirst].z:=4
+                  else Map.vFaceLmpCAPS[FACEDRAW_HDR][j + pfe.iFirst].z:=1;
+                  Map.vFaceLmpCAPS[FACEDRAW_HDR][j + pfe.iFirst].w:=pfe.nStyles[FACEDRAW_HDR];
+                end;
 						end;
 				end;
       pfe.vCenter.x:=pfe.vCenter.x/pfe.iCount;
@@ -2101,6 +2063,109 @@ begin
 
           Map.vBModels[i].isTrigger:=Boolean(Pos('trigger_', pent.ClassName) > 0);
         end;
+    end;
+
+  // 5.6 Compute Disp Ext's
+  Map.nTotalDispVertex:=0;
+  for k:=0 to nDisps-1 do
+    begin
+      Map.vDisps[k].bValid:=False;
+
+      i:=ADispInfo(Lumps[LUMP_DISPINFO])[k].nDispFace;
+      if (i >= nFaces) then Continue;
+      Map.vDisps[k].pRefFace:=@Map.vFaces[i];
+      Map.vDisps[k].pRefFace.pDispExt:=@Map.vDisps[k];
+
+      if (Map.vDisps[k].pRefFace.iCount <> 4) then Continue;
+
+      Map.vDisps[k].nPower:=ADispInfo(Lumps[LUMP_DISPINFO])[k].nPower;
+      case (Map.vDisps[k].nPower) of
+        2: Map.vDisps[k].nSize:=DISP_SIZE_BY_POWER_2;
+        3: Map.vDisps[k].nSize:=DISP_SIZE_BY_POWER_3;
+        4: Map.vDisps[k].nSize:=DISP_SIZE_BY_POWER_4;
+      else
+        Continue;
+      end;
+
+      Map.vDisps[k].vOrigin:=ADispInfo(Lumps[LUMP_DISPINFO])[k].vOrigin;
+
+      Map.vDisps[k].nSqrSize:=Sqr(Map.vDisps[k].nSize); // vVertices size too
+      Map.vDisps[k].nTriangles:=Sqr(Map.vDisps[k].nSize - 1)*2;
+
+      Map.vDisps[k].iFirst:=Map.nTotalDispVertex;
+      Map.vDisps[k].iCount:=Map.vDisps[k].nSqrSize;
+      Map.vDisps[k].iLast:=Map.vDisps[k].iFirst + Map.vDisps[k].iCount - 1;
+      Inc(Map.nTotalDispVertex, Map.vDisps[k].iCount);
+
+      Map.vDisps[k].bValid:=True;
+    end;
+
+  // 5.6.1 Compute DispExt vertex data
+  SetLength(Map.vDispVertAlpha, Map.nTotalDispVertex);
+  ZeroFillChar(@Map.vDispVertAlpha[0], Map.nTotalDispVertex*SizeOf(tVec4f));
+  for k:=0 to nDisps-1 do
+    begin
+      if (Map.vDisps[k].bValid = False) then Continue;
+
+      for i:=0 to 3 do Map.vDisps[k].vBase[i]:=Map.vFaceVertices[Map.vDisps[k].pRefFace.iFirst + i];
+      tmpVec2f.x:=SqrDistVec3f(Map.vDisps[k].vBase[0], Map.vDisps[k].vOrigin);
+      j:=0;
+      for i:=1 to 3 do
+        begin
+          tmpVec2f.y:=SqrDistVec3f(Map.vDisps[k].vBase[i], Map.vDisps[k].vOrigin);
+          if (tmpVec2f.y < tmpVec2f.x) then
+            begin
+              tmpVec2f.x:=tmpVec2f.y;
+              j:=i;
+            end;
+        end;
+      for i:=0 to 3 do
+        begin
+          Map.vDisps[k].vBase[i]:=Map.vFaceVertices[Map.vDisps[k].pRefFace.iFirst + ((i + j) mod 4)];
+        end;
+      Map.vDisps[k].iBase:=j;
+
+      for i:=FACEDRAW_LDR to FACEDRAW_HDR do
+        begin
+          Map.vDisps[k].vLmpUV[i][0].x:=0;
+          Map.vDisps[k].vLmpUV[i][0].y:=0;
+
+          Map.vDisps[k].vLmpUV[i][1].x:=0;
+          Map.vDisps[k].vLmpUV[i][1].y:=Map.vDisps[k].pRefFace.LmpSz[i].y -1;
+
+          Map.vDisps[k].vLmpUV[i][2].x:=Map.vDisps[k].pRefFace.LmpSz[i].x -1;
+          Map.vDisps[k].vLmpUV[i][2].y:=Map.vDisps[k].pRefFace.LmpSz[i].y -1;
+
+          Map.vDisps[k].vLmpUV[i][3].x:=Map.vDisps[k].pRefFace.LmpSz[i].x -1;
+          Map.vDisps[k].vLmpUV[i][3].y:=0;
+        end;
+
+      pDVec:=@ADispVert(Lumps[LUMP_DISPVERTEX])[ADispInfo(Lumps[LUMP_DISPINFO])[k].nVertStart];
+      for i:=0 to Map.vDisps[k].nSize-1 do
+        for j:=0 to Map.vDisps[k].nSize-1 do
+          begin
+            tmpVec2f.x:=i/(Map.vDisps[k].nSize-1);
+            tmpVec2f.y:=j/(Map.vDisps[k].nSize-1);
+
+            TessellatingFlatDispPoint(
+              @tmpVec2f,
+              @Map.vDisps[k].vBase[0],
+              @tmpVec3f
+            );
+
+            Map.vDispVertAlpha[i*Map.vDisps[k].nSize + j + Map.vDisps[k].iFirst].x:=tmpVec3f.x + pDVec.v.x*pDVec.d;
+            Map.vDispVertAlpha[i*Map.vDisps[k].nSize + j + Map.vDisps[k].iFirst].y:=tmpVec3f.y + pDVec.v.y*pDVec.d;
+            Map.vDispVertAlpha[i*Map.vDisps[k].nSize + j + Map.vDisps[k].iFirst].z:=tmpVec3f.z + pDVec.v.z*pDVec.d;
+            Map.vDispVertAlpha[i*Map.vDisps[k].nSize + j + Map.vDisps[k].iFirst].w:=pDVec.a;
+
+            Inc(pDVec);
+          end;
+      GetBBOX3f(
+        @Map.vDispVertAlpha[Map.vDisps[k].iFirst],
+        @Map.vDisps[k].vBBOX,
+        Map.vDisps[k].iCount,
+        SizeOf(tVec4f)
+      );
     end;
 
   CloseFile(MapFile);

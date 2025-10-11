@@ -3,15 +3,16 @@ precision highp float;
 
 in vec2 	fTexCoord;
 in vec2 	fLmpCoord;
-in vec4		fLmpCAPS; // xy = Lmp size in Atlas coord, z = max bumps, w = max styles
+in float	fDispAlpha;
 
 out vec4 outColor;
 
 uniform sampler2D sampler0; // lightmap 
-uniform vec4 fxColorAlpha;	// FX Engine
+uniform vec4 	fxColorAlpha;	// FX Engine
 uniform float fStyle; 
 uniform float fBump; 
 uniform float fLightmapExpShift;
+uniform vec4	fLmpCAPS; // xy = Lmp size in Atlas coord, z = max bumps, w = max styles
 
 const float fLightmapExpBais = 128.0f / 255.0f; 
 const vec3 fInvGamma = vec3(1.0f / 2.2f);

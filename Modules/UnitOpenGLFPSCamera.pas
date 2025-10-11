@@ -96,9 +96,32 @@ type CFirtsPersonViewCamera = class
     // Mouse ray start at camera pos, ray dir is normalized.
     procedure GetTraceLineByMouseClick(const MousePosWinCoord: TPoint; const Ray: PRay);
   end;
+
+
+procedure PointToScreen(const Src, Dst: PVec3f; const Mat: PMat4f);
   
 
 implementation
+
+
+procedure PointToScreen(const Src, Dst: PVec3f; const Mat: PMat4f);
+var
+  i: Integer;
+begin
+  {$R-}
+  Dst.x:=Mat[3*4+0];
+  Dst.y:=Mat[3*4+1];
+  Dst.z:=Mat[3*4+2];
+  for i:=0 to 2 do
+    begin
+      Dst.x:=Dst.x + Src.x*Mat[i*4+0];
+      Dst.y:=Dst.y + Src.y*Mat[i*4+1];
+      Dst.z:=Dst.z + Src.z*Mat[i*4+2];
+    end;
+  Dst.x:=Dst.x/Dst.z;
+  Dst.y:=Dst.y/Dst.z;
+  {$R+}
+end;
 
 
 constructor CFirtsPersonViewCamera.CreateNewCamera(const Pos: tVec3f;

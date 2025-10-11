@@ -27,11 +27,12 @@ const
   MEGATEXTURE_DUMMY_REGIONID  = 0;
   MEGATEXTURE_DUMMY_SIZE: tVec2s = (X: 2; Y: 2);
   MEGATEXTURE_DUMMY_DATA: array[0..3] of tLightmap = (
-    (r: 255; g: 255; b: 255; e: 128;),
-    (r: 255; g: 255; b: 255; e: 128;),
-    (r: 255; g: 255; b: 255; e: 128;),
-    (r: 255; g: 255; b: 255; e: 128;)
-  );
+    (r: 0; g: 0; b: 0; e: 127;),
+    (r: 0; g: 0; b: 0; e: 127;),
+    (r: 0; g: 0; b: 0; e: 127;),
+    (r: 0; g: 0; b: 0; e: 127;)
+  ); // black with max exponent is unsupported by Source, but
+     // here used for mark Faces without lightmap, fullbright
   MEGATEXTURE_DUMMY_COORD: tVec2f = (
     x: 0.0; y: 0.0;
   );
@@ -120,10 +121,10 @@ type CMegatextureManager = class
     function IsCanReserveTexture(const Size: tVec2s): Boolean;
     function ReserveTexture(const Size: tVec2s): Integer; // Return SubRegion id
     //
-    function UpdateTextureFromArray(const MegatextureId, SubRegionId: Integer;
-      const SrcData: PLightmap): Boolean;
+    //function UpdateTextureFromArray(const MegatextureId, SubRegionId: Integer;
+    //  const SrcData: PLightmap): Boolean;
     function UpdateCurrentBufferFromArray(const MegatextureId, SubRegionId: Integer;
-      const SrcData: PLightmap): Boolean;
+      const SrcData: PLightmap; const RegionOffset, OverrideSize: PVec2s): Boolean;
     function UpdateTextureFromCurrentBuffer(): Boolean;
     //
     procedure BindMegatexture2D(const MegatextureIndex: Integer);
@@ -478,7 +479,7 @@ begin
 end;
 
 
-function CMegatextureManager.UpdateTextureFromArray(const MegatextureId, SubRegionId: Integer;
+(*function CMegatextureManager.UpdateTextureFromArray(const MegatextureId, SubRegionId: Integer;
   const SrcData: PLightmap): Boolean;
 var
   SubRegion: tSubRegion;
@@ -532,10 +533,10 @@ begin
   
   Result:=True;
   {$R+}
-end;
+end; //*)
 
 function CMegatextureManager.UpdateCurrentBufferFromArray(const MegatextureId, SubRegionId: Integer;
-  const SrcData: PLightmap): Boolean;
+  const SrcData: PLightmap; const RegionOffset, OverrideSize: PVec2s): Boolean;
 var
   i, j: Integer;
   PtrSrcData, PtrDest: PLightmap;
@@ -565,12 +566,29 @@ begin
       SubRegion:=Self.PageList[MegatextureId].Regions[SubRegionId - 1];
     end;
 
+  if (OverrideSize <> nil) then
+    begin
+      SubRegion.bMax.x:=SubRegion.bMin.x + OverrideSize.x - 1;
+      SubRegion.bMax.y:=SubRegion.bMin.y + OverrideSize.y - 1;
+    end;
+
+  if (RegionOffset <> nil) then if (
+    ((RegionOffset.x + SubRegion.bMax.x) < MEGATEXTURE_SIZE) AND
+    ((RegionOffset.y + SubRegion.bMax.y) < MEGATEXTURE_SIZE)
+  ) then begin
+      Inc(SubRegion.bMin.x, RegionOffset.x);
+      Inc(SubRegion.bMin.y, RegionOffset.y);
+      Inc(SubRegion.bMax.x, RegionOffset.x);
+      Inc(SubRegion.bMax.y, RegionOffset.y);
+    end;
+
   PtrSrcData:=SrcData;
   PtrDest:=@Self.CurrPixelBuff[SubRegion.bMin.y*MEGATEXTURE_SIZE + SubRegion.bMin.x];
   j:=SubRegion.bMax.x - SubRegion.bMin.x + 1;
   for i:=0 to (SubRegion.bMax.y - SubRegion.bMin.y) do
     begin
-      CopyLightmaps(PtrSrcData, PtrDest, j);
+      //CopyLightmaps(PtrSrcData, PtrDest, j);
+      CopyLightmapsFixExp(PtrSrcData, PtrDest, j);
       Inc(PtrSrcData, j);
       Inc(PtrDest, MEGATEXTURE_SIZE);
     end;
@@ -647,7 +665,7 @@ end;
 function CMegatextureManager.UpdateTextureCoords(
   const MegatextureId, SubRegionId: Integer;
   const CoordSrc: PVec2f; const CoordDest: PVec2f;
-  const CountTexCoords: Integer): Boolean;
+  const CountTexCoords: Integer): Boolean;   
 var
   i: Integer;
   CurrSubRegion: tSubRegion;
@@ -681,12 +699,6 @@ begin
     begin
       AVec2f(CoordDest)[i].x:=(AVec2f(CoordSrc)[i].x + CurrSubRegion.bMin.x + 0.5)*MEGATEXTURE_STEP;
       AVec2f(CoordDest)[i].y:=(AVec2f(CoordSrc)[i].y + CurrSubRegion.bMin.y + 0.5)*MEGATEXTURE_STEP;
-    end; //}
-
-  {for i:=0 to (CountTexCoords - 1) do
-    begin
-      AVec2f(CoordDest)[i].x:=AVec2f(CoordSrc)[i].x + CurrSubRegion.bMin.x;
-      AVec2f(CoordDest)[i].y:=AVec2f(CoordSrc)[i].y + CurrSubRegion.bMin.y;
     end; //}
 
   Result:=True;

@@ -39,22 +39,14 @@ type PMat3f = ^tMat3f;
 type tMat4f = array[0..15] of Single;
 type PMat4f = ^tMat4f;
 
-type tLightmapBSP = packed record
+type tLightmap = packed record
     r, g, b: Byte;
     e: ShortInt;
   end; // 4 Bytes
-type PLightmapBSP = ^tLightmapBSP;
-type ALightmapBSP = array of tLightmapBSP;
-
-// !!! not BSP format !!!
-// exponent shifted up by 128, for glTexImage2D as RGBA8888 [0..255]
-type tLightmap = packed record
-    r, g, b, e: Byte;
-  end;
 type PLightmap = ^tLightmap;
 type ALightmap = array of tLightmap;
 
-type tCompressedLightCube = array[0..5] of tLightmapBSP; // 24 Bytes
+type tCompressedLightCube = array[0..5] of tLightmap; // 24 Bytes
 type PCompressedLightCube = ^tCompressedLightCube;
 type ACompressedLightCube = array of tCompressedLightCube;
 

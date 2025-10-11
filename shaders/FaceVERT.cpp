@@ -1,12 +1,14 @@
 #version 330
 precision highp float;
 
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec2 aTexCoord;
-layout (location = 2) in vec2 aLmpCoord;
+layout (location = 0) in vec3 	aPos;
+layout (location = 1) in vec2 	aTexCoord;
+layout (location = 2) in vec2		aLmpCoord;
+layout (location = 3) in vec4		aLmpCAPS;
 
 out vec2 	fTexCoord;
 out vec2 	fLmpCoord;
+out vec4	fLmpCAPS;
 
 uniform mat4 cameramat; 	
 uniform vec3 entOrigin;
@@ -16,6 +18,7 @@ void main()
 {
   fTexCoord = aTexCoord;
 	fLmpCoord = aLmpCoord;
+	fLmpCAPS	= aLmpCAPS;
 	
   gl_Position = cameramat * vec4(aPos.xyz + entOrigin.xyz, 1.0);
 	//gl_Position = vec4(aPos, 1.0);

@@ -27,6 +27,7 @@ function DotVec3f(const VecA: tVec4f; const VecB: tVec3f): Extended; overload;
 procedure DotVec4f(const VecA, VecB: PVec4f; const res: PSingle);
 procedure CrossVec3f(const VecA, VecB, VecRes: PVec3f);
 procedure TranslateVertexArray4f(const Vertex: PVec4f; const lpOffset: PVec4f; const Count: Integer);
+function  SqrDistVec3f(const VecA, VecB: tVec3f): Extended;
 
 function  DotVec3f4f(const Vec3: tVec3f; const Vec4: tVec4f): Extended;
 
@@ -35,8 +36,10 @@ function VecToStr(const Vec3f: tVec3f): String; overload;
 function VecToStr(const Vec4f: tVec4f): String; overload;
 function StrToVec(const Str: String; const Vec: PVec3f): Boolean;
 
-procedure GetBBOX4f(const Vertex: AVec4f; const lpBBOX4f: PBBOX4f;
-  const CountVertex: Integer);
+// if Stride < SizeOf(tVec3f) then using Stride=0
+procedure GetBBOX3f(const Vertices: PVec3f; const BBOX3f: PBBOX3f;
+  const Count, Stride: Integer);
+
 procedure GetTexBBOX(const TexCoords: AVec2f; const lpTexBBOXf: PTexBBOXf;
   const CountCoords: Integer);
 
@@ -125,9 +128,13 @@ procedure CopyBitmapToRGB888(const Src: TBitmap; const Dest: PRGB888);
 procedure CopyRGB888toBitmap(const Src: PRGB888; const Dest: TBitmap);
 procedure SumTexturesRGB(const SrcA, SrcB, Dst: PRGB888; const Count: Integer);
 procedure CopyTexturesRGB(const Src, Dst: PRGB888; const Count: Integer);
-procedure ApplyGammaToTextureRGB(const Src, Dst: PRGB888; const Count: Integer);
 
 procedure CopyLightmaps(const Src, Dst: PLightmap; const Count: Integer);
+procedure CopyLightmapsFixExp(const Src, Dst: PLightmap; const Count: Integer);
+
+
+procedure NearestRescaleLightmapToBitmap(const SrcData: PLightmap;
+  const SrcSize: PVec2s; const DstImg: TBitmap; const isRGB: Boolean);
 
 
 implementation
@@ -432,6 +439,17 @@ asm
   {$R+}
 end;
 
+function  SqrDistVec3f(const VecA, VecB: tVec3f): Extended;
+var
+  Dist: tVec3f;
+begin
+  {$R-}
+  Dist.x:=VecB.x - VecA.x;
+  Dist.y:=VecB.y - VecA.y;
+  Dist.z:=VecB.z - VecA.z;
+  Result:=SqrLengthVec3f(Dist);
+  {$R+}
+end;
 
 function FloatToStrFixed(const Value: Single): String;
 begin
@@ -506,24 +524,41 @@ begin
   {$R+}
 end;
 
-procedure GetBBOX4f(const Vertex: AVec4f; const lpBBOX4f: PBBOX4f;
-  const CountVertex: Integer);
+procedure GetBBOX3f(const Vertices: PVec3f; const BBOX3f: PBBOX3f;
+  const Count, Stride: Integer);
 var
   i: Integer;
+  ptr: PByte;
 begin
   {$R-}
-  lpBBOX4f.vMin:=Vertex[0];
-  lpBBOX4f.vMax:=Vertex[0];
-  if (CountVertex = 1) then Exit;
-  for i:=1 to CountVertex-1 do
-    begin
-      if (Vertex[i].x < lpBBOX4f.vMin.x) then lpBBOX4f.vMin.x:=Vertex[i].x;
-      if (Vertex[i].y < lpBBOX4f.vMin.y) then lpBBOX4f.vMin.y:=Vertex[i].y;
-      if (Vertex[i].z < lpBBOX4f.vMin.z) then lpBBOX4f.vMin.z:=Vertex[i].z;
+  ptr:=Pointer(Vertices);
+  BBOX3f.vMin:=Vertices^;
+  BBOX3f.vMax:=Vertices^;
+  if (Stride < 0) then Exit;
 
-      if (Vertex[i].x > lpBBOX4f.vMax.x) then lpBBOX4f.vMax.x:=Vertex[i].x;
-      if (Vertex[i].y > lpBBOX4f.vMax.y) then lpBBOX4f.vMax.y:=Vertex[i].y;
-      if (Vertex[i].z > lpBBOX4f.vMax.z) then lpBBOX4f.vMax.z:=Vertex[i].z;
+  if (Stride >= SizeOf(tVec3f)) then for i:=1 to Count-1 do
+    begin
+      if (PVec3f(ptr).x < BBOX3f.vMin.x) then BBOX3f.vMin.x:=PVec3f(ptr).x;
+      if (PVec3f(ptr).y < BBOX3f.vMin.y) then BBOX3f.vMin.y:=PVec3f(ptr).y;
+      if (PVec3f(ptr).z < BBOX3f.vMin.z) then BBOX3f.vMin.z:=PVec3f(ptr).z;
+
+      if (PVec3f(ptr).x > BBOX3f.vMax.x) then BBOX3f.vMax.x:=PVec3f(ptr).x;
+      if (PVec3f(ptr).y > BBOX3f.vMax.y) then BBOX3f.vMax.y:=PVec3f(ptr).y;
+      if (PVec3f(ptr).z > BBOX3f.vMax.z) then BBOX3f.vMax.z:=PVec3f(ptr).z;
+
+      Inc(ptr, Stride);
+    end
+  else for i:=1 to Count-1 do
+    begin
+      if (PVec3f(ptr).x < BBOX3f.vMin.x) then BBOX3f.vMin.x:=PVec3f(ptr).x;
+      if (PVec3f(ptr).y < BBOX3f.vMin.y) then BBOX3f.vMin.y:=PVec3f(ptr).y;
+      if (PVec3f(ptr).z < BBOX3f.vMin.z) then BBOX3f.vMin.z:=PVec3f(ptr).z;
+
+      if (PVec3f(ptr).x > BBOX3f.vMax.x) then BBOX3f.vMax.x:=PVec3f(ptr).x;
+      if (PVec3f(ptr).y > BBOX3f.vMax.y) then BBOX3f.vMax.y:=PVec3f(ptr).y;
+      if (PVec3f(ptr).z > BBOX3f.vMax.z) then BBOX3f.vMax.z:=PVec3f(ptr).z;
+
+      Inc(ptr, SizeOf(tVec3f));
     end;
   {$R+}
 end;
@@ -1719,6 +1754,100 @@ asm
   //
 @@NoDataToCopy:
   RET
+  {$R+}
+end;
+
+procedure CopyLightmapsFixExp(const Src, Dst: PLightmap; const Count: Integer);
+asm
+  {$R-}
+  // EAX = Src, EDX = Dst; ECX = Count
+  CMP     ECX, 0
+  JLE   @@NoDataToCopy
+  TEST    EAX, EAX
+  JZ    @@NoDataToCopy
+  TEST    EDX, EDX
+  JZ    @@NoDataToCopy
+  //
+  PUSH    ESI
+  PUSH    EDI
+  MOV     ESI, EAX
+  MOV     EDI, EDX
+  //
+@@CopyFixExp:
+  LODSD
+  ADD     EAX, $80000000
+  CMP     EAX, $80000000
+  JNZ   @@NonZeroLmp
+  MOV     EAX, $00000000
+@@NonZeroLmp:
+  STOSD
+  LOOP  @@CopyFixExp
+  //
+  POP     EDI
+  POP     ESI
+  //
+@@NoDataToCopy:
+  RET
+  {$R+}
+end;
+
+
+procedure NearestRescaleLightmapToBitmap(const SrcData: PLightmap;
+  const SrcSize: PVec2s; const DstImg: TBitmap; const isRGB: Boolean);
+var
+  SrcX, SrcY, DstX, DstY, SrcOffset, grey: Integer;
+  ScaleX, ScaleY: Single;
+  p: pRGBArray;
+  lmp: PLightmap;
+begin
+  {$R-}
+  if (SrcData = nil) or (SrcSize = nil) or (DstImg = nil) then Exit;
+  if (SrcSize.x <= 0) or (SrcSize.y <= 0) then Exit;
+  if (DstImg.Width <= 0) or (DstImg.Height <= 0) then Exit;
+  if (DstImg.PixelFormat <> pf24bit) then Exit;
+
+  ScaleX:=SrcSize.x/DstImg.Width;
+  ScaleY:=SrcSize.y/DstImg.Height;
+  //
+  if (isRGB) then for DstY:=0 to (DstImg.Height - 1) do
+    begin
+      SrcY:=Round(DstY*ScaleY);
+      p:=DstImg.ScanLine[DstY];
+      if (SrcY >= SrcSize.y) then SrcY:=SrcSize.y - 1;
+      //
+      SrcOffset:=SrcY*SrcSize.x;
+      for DstX:=0 to (DstImg.Width - 1) do
+        begin
+          SrcX:=Round(DstX*ScaleX);
+          if (SrcX >= SrcSize.x) then SrcX:=SrcSize.x - 1;
+          //
+          lmp:=@ALightmap(SrcData)[SrcOffset + SrcX];
+          p^[DstX].rgbtBlue:=lmp.b;
+          p^[DstX].rgbtGreen:=lmp.g;
+          p^[DstX].rgbtRed:=lmp.r;
+        end;
+    end
+  else for DstY:=0 to (DstImg.Height - 1) do
+    begin
+      SrcY:=Round(DstY*ScaleY);
+      p:=DstImg.ScanLine[DstY];
+      if (SrcY >= SrcSize.y) then SrcY:=SrcSize.y - 1;
+      //
+      SrcOffset:=SrcY*SrcSize.x;
+      for DstX:=0 to (DstImg.Width - 1) do
+        begin
+          SrcX:=Round(DstX*ScaleX);
+          if (SrcX >= SrcSize.x) then SrcX:=SrcSize.x - 1;
+          //
+          lmp:=@ALightmap(SrcData)[SrcOffset + SrcX];
+          grey:=128 + lmp.e*8;
+          if (grey < 0) then grey:=0;
+          if (grey > 255) then grey:=255;
+          p^[DstX].rgbtBlue:=grey;
+          p^[DstX].rgbtGreen:=grey;
+          p^[DstX].rgbtRed:=grey;
+        end;
+    end
   {$R+}
 end;
 

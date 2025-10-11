@@ -23,7 +23,8 @@ uses
   UnitImageTGA in 'Modules\UnitImageTGA.pas',
   UnitRadianceHDR in 'Modules\UnitRadianceHDR.pas',
   UnitVTFMeowLib in 'Modules\UnitVTFMeowLib.pas',
-  UnitBufferObjectManager in 'Modules\UnitBufferObjectManager.pas';
+  UnitBufferObjectManager in 'Modules\UnitBufferObjectManager.pas',
+  UnitDispMisc in 'Modules\SourceBSP\UnitDispMisc.pas';
 
 {$R *.res}
 var

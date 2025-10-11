@@ -1,8 +1,8 @@
 object MainForm: TMainForm
-  Left = 473
-  Top = 298
+  Left = 643
+  Top = 187
   Width = 720
-  Height = 590
+  Height = 591
   Caption = 'BSP Source Viewer'
   Color = 2105376
   Constraints.MinHeight = 590
@@ -20,12 +20,12 @@ object MainForm: TMainForm
   OnKeyUp = FormKeyUp
   DesignSize = (
     704
-    531)
+    532)
   PixelsPerInch = 96
   TextHeight = 16
   object LabelCameraPos: TLabel
     Left = 316
-    Top = 512
+    Top = 513
     Width = 209
     Height = 17
     Align = alCustom
@@ -35,7 +35,7 @@ object MainForm: TMainForm
   end
   object LabelCameraLeafId: TLabel
     Left = 100
-    Top = 512
+    Top = 513
     Width = 209
     Height = 17
     Align = alCustom
@@ -45,7 +45,7 @@ object MainForm: TMainForm
   end
   object LabelStylePage: TLabel
     Left = 532
-    Top = 512
+    Top = 513
     Width = 121
     Height = 17
     Align = alCustom
@@ -55,7 +55,7 @@ object MainForm: TMainForm
   end
   object LabelCameraFPS: TLabel
     Left = 2
-    Top = 512
+    Top = 513
     Width = 89
     Height = 17
     Align = alCustom
@@ -65,7 +65,7 @@ object MainForm: TMainForm
   end
   object LabelLDRHDR: TLabel
     Left = 652
-    Top = 512
+    Top = 513
     Width = 49
     Height = 17
     Align = alCustom
@@ -77,7 +77,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 512
-    Height = 512
+    Height = 513
     Anchors = [akLeft, akTop, akRight, akBottom]
     BevelOuter = bvNone
     Caption = 'Panel Render Target'
@@ -109,7 +109,7 @@ object MainForm: TMainForm
       Caption = 'Face'
       object GroupBoxFaceTexel: TGroupBox
         Left = 0
-        Top = 168
+        Top = 272
         Width = 177
         Height = 62
         Caption = ' Pick Texel on Face '
@@ -156,6 +156,8 @@ object MainForm: TMainForm
           Font.Style = [fsBold]
           ParentColor = False
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 1
         end
         object LabelFaceLmpUV: TStaticText
@@ -194,12 +196,14 @@ object MainForm: TMainForm
           Font.Style = [fsBold]
           ParentColor = False
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 3
         end
       end
       object GroupBoxFacePlane: TGroupBox
         Left = 0
-        Top = 234
+        Top = 338
         Width = 177
         Height = 121
         Caption = ' Plane Equation '
@@ -246,6 +250,8 @@ object MainForm: TMainForm
           Font.Style = [fsBold]
           ParentColor = False
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 1
         end
         object LabelFacePlaneY: TStaticText
@@ -284,6 +290,8 @@ object MainForm: TMainForm
           Font.Style = [fsBold]
           ParentColor = False
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 3
         end
         object LabelFacePlaneZ: TStaticText
@@ -322,6 +330,8 @@ object MainForm: TMainForm
           Font.Style = [fsBold]
           ParentColor = False
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 5
         end
         object LabelFacePlaneD: TStaticText
@@ -360,6 +370,8 @@ object MainForm: TMainForm
           Font.Style = [fsBold]
           ParentColor = False
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 7
         end
         object LabelFacePlaneF: TStaticText
@@ -405,7 +417,7 @@ object MainForm: TMainForm
         Left = 0
         Top = 2
         Width = 177
-        Height = 161
+        Height = 263
         Caption = ' Selected Face information '
         Font.Charset = ANSI_CHARSET
         Font.Color = clGray
@@ -609,6 +621,7 @@ object MainForm: TMainForm
           Top = 60
           Width = 174
           Height = 20
+          Hint = 'Extened name'
           AutoSize = False
           BevelInner = bvNone
           BevelOuter = bvNone
@@ -622,6 +635,8 @@ object MainForm: TMainForm
           Font.Style = [fsBold]
           ParentColor = False
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 10
         end
         object EditFaceEntityClass: TStaticText
@@ -629,6 +644,7 @@ object MainForm: TMainForm
           Top = 80
           Width = 174
           Height = 20
+          Hint = 'Extened name'
           AutoSize = False
           BevelInner = bvNone
           BevelOuter = bvNone
@@ -642,7 +658,107 @@ object MainForm: TMainForm
           Font.Style = [fsBold]
           ParentColor = False
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 11
+        end
+        object StaticText5: TStaticText
+          Left = 0
+          Top = 160
+          Width = 89
+          Height = 20
+          AutoSize = False
+          BevelInner = bvNone
+          BevelOuter = bvNone
+          BorderStyle = sbsSingle
+          Caption = ' Disp ID, pow'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clGray
+          Font.Height = -13
+          Font.Name = 'Script'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 12
+        end
+        object EditFaceDispID: TStaticText
+          Left = 88
+          Top = 160
+          Width = 87
+          Height = 20
+          AutoSize = False
+          BevelInner = bvNone
+          BevelOuter = bvNone
+          BorderStyle = sbsSingle
+          Caption = '  No selected'
+          Color = clBlack
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clSilver
+          Font.Height = -13
+          Font.Name = 'Script'
+          Font.Style = [fsBold]
+          ParentColor = False
+          ParentFont = False
+          TabOrder = 13
+        end
+        object StaticText7: TStaticText
+          Left = 0
+          Top = 180
+          Width = 89
+          Height = 20
+          AutoSize = False
+          BevelInner = bvNone
+          BevelOuter = bvNone
+          BorderStyle = sbsSingle
+          Caption = ' Disp origin'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clGray
+          Font.Height = -13
+          Font.Name = 'Script'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 14
+        end
+        object EditFaceDispOrigin: TStaticText
+          Left = 88
+          Top = 180
+          Width = 87
+          Height = 20
+          AutoSize = False
+          BevelInner = bvNone
+          BevelOuter = bvNone
+          BorderStyle = sbsSingle
+          Caption = '  No selected'
+          Color = clBlack
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clSilver
+          Font.Height = -13
+          Font.Name = 'Script'
+          Font.Style = [fsBold]
+          ParentColor = False
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 15
+        end
+        object MemoFaceVertex: TMemo
+          Left = 0
+          Top = 200
+          Width = 172
+          Height = 61
+          Color = clBlack
+          Ctl3D = False
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clGray
+          Font.Height = -13
+          Font.Name = 'Script'
+          Font.Style = [fsBold]
+          Lines.Strings = (
+            'Face vertices:')
+          ParentCtl3D = False
+          ParentFont = False
+          ReadOnly = True
+          ScrollBars = ssVertical
+          TabOrder = 16
         end
       end
     end
@@ -705,6 +821,8 @@ object MainForm: TMainForm
           Font.Style = []
           ParentColor = False
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 1
         end
         object EditTexSize: TStaticText
@@ -811,366 +929,17 @@ object MainForm: TMainForm
           TabOrder = 8
         end
       end
-      object GroupBoxFaceTexInfo: TGroupBox
-        Left = 0
-        Top = 278
-        Width = 177
-        Height = 203
-        Caption = ' Texture Transformation '
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clGray
-        Font.Height = -13
-        Font.Name = 'Script'
-        Font.Style = []
-        ParentFont = False
-        TabOrder = 1
-        object LabelFaceTexSx: TStaticText
-          Left = 0
-          Top = 20
-          Width = 24
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' Sx'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clGray
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = []
-          ParentFont = False
-          TabOrder = 0
-        end
-        object EditFaceTexSx: TStaticText
-          Left = 24
-          Top = 20
-          Width = 154
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' No selected'
-          Color = clBlack
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clSilver
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 1
-        end
-        object LabelFaceTexSy: TStaticText
-          Left = 0
-          Top = 40
-          Width = 24
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' Sy'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clGray
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = []
-          ParentFont = False
-          TabOrder = 2
-        end
-        object EditFaceTexSy: TStaticText
-          Left = 24
-          Top = 40
-          Width = 154
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' No selected'
-          Color = clBlack
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clSilver
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 3
-        end
-        object LabelFaceTexSz: TStaticText
-          Left = 0
-          Top = 60
-          Width = 24
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' Sz'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clGray
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = []
-          ParentFont = False
-          TabOrder = 4
-        end
-        object EditFaceTexSz: TStaticText
-          Left = 24
-          Top = 60
-          Width = 154
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' No selected'
-          Color = clBlack
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clSilver
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 5
-        end
-        object LabelFaceTexSShift: TStaticText
-          Left = 0
-          Top = 80
-          Width = 24
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' So'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clGray
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = []
-          ParentFont = False
-          TabOrder = 6
-        end
-        object EditFaceTexSShift: TStaticText
-          Left = 24
-          Top = 80
-          Width = 154
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' No selected'
-          Color = clBlack
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clSilver
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 7
-        end
-        object LabelFaceTexTx: TStaticText
-          Left = 0
-          Top = 100
-          Width = 24
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' Tx'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clGray
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = []
-          ParentFont = False
-          TabOrder = 8
-        end
-        object EditFaceTexTx: TStaticText
-          Left = 24
-          Top = 100
-          Width = 154
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' No selected'
-          Color = clBlack
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clSilver
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 9
-        end
-        object LabelFaceTexTy: TStaticText
-          Left = 0
-          Top = 120
-          Width = 24
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' Ty'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clGray
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = []
-          ParentFont = False
-          TabOrder = 10
-        end
-        object EditFaceTexTy: TStaticText
-          Left = 24
-          Top = 120
-          Width = 154
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' No selected'
-          Color = clBlack
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clSilver
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 11
-        end
-        object LabelFaceTexTz: TStaticText
-          Left = 0
-          Top = 140
-          Width = 24
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' Tz'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clGray
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = []
-          ParentFont = False
-          TabOrder = 12
-        end
-        object EditFaceTexTz: TStaticText
-          Left = 24
-          Top = 140
-          Width = 154
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' No selected'
-          Color = clBlack
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clSilver
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 13
-        end
-        object LabelFaceTexTShift: TStaticText
-          Left = 0
-          Top = 160
-          Width = 24
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' To'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clGray
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = []
-          ParentFont = False
-          TabOrder = 14
-        end
-        object EditFaceTexTShift: TStaticText
-          Left = 24
-          Top = 160
-          Width = 154
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' No selected'
-          Color = clBlack
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clSilver
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 15
-        end
-        object LabelFaceTexFlags: TStaticText
-          Left = 0
-          Top = 180
-          Width = 57
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' Flags'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clGray
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = []
-          ParentFont = False
-          TabOrder = 16
-        end
-        object EditFaceTexFlags: TStaticText
-          Left = 56
-          Top = 180
-          Width = 121
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = '  No selected'
-          Color = clBlack
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clSilver
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 17
-        end
-      end
     end
     object TabSheet3: TTabSheet
       Caption = 'Lightmaps'
       ImageIndex = 2
+      object ImageLmpPreview: TImage
+        Left = 4
+        Top = 330
+        Width = 128
+        Height = 128
+        OnMouseMove = ImageLmpPreviewMouseMove
+      end
       object GroupBoxLightmapInfo: TGroupBox
         Left = 0
         Top = 2
@@ -1258,6 +1027,8 @@ object MainForm: TMainForm
           Font.Style = [fsBold]
           ParentColor = False
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 3
         end
         object LabelLmpStyle2: TStaticText
@@ -1296,6 +1067,8 @@ object MainForm: TMainForm
           Font.Style = [fsBold]
           ParentColor = False
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 5
         end
         object EditLmpStyle3: TStaticText
@@ -1316,6 +1089,8 @@ object MainForm: TMainForm
           Font.Style = [fsBold]
           ParentColor = False
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 6
         end
         object LabelLmpStyle3: TStaticText
@@ -1354,6 +1129,8 @@ object MainForm: TMainForm
           Font.Style = [fsBold]
           ParentColor = False
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 8
         end
         object StaticText2: TStaticText
@@ -1389,10 +1166,11 @@ object MainForm: TMainForm
         Font.Style = []
         ParentFont = False
         TabOrder = 1
+        OnClick = CBLmpPreviewRGBClick
       end
       object ButtonLoadLmp: TButton
         Left = 1
-        Top = 186
+        Top = 210
         Width = 88
         Height = 22
         Caption = 'Load'
@@ -1401,17 +1179,16 @@ object MainForm: TMainForm
       end
       object ButtonSaveLmp: TButton
         Left = 89
-        Top = 186
+        Top = 210
         Width = 88
         Height = 22
         Caption = 'Save'
-        Enabled = False
         TabOrder = 3
         OnClick = ButtonSaveLmpClick
       end
       object ButtonDeleteLmp: TButton
         Left = 1
-        Top = 210
+        Top = 234
         Width = 88
         Height = 22
         Caption = 'Delete'
@@ -1420,161 +1197,29 @@ object MainForm: TMainForm
       end
       object ButtonAddLmp: TButton
         Left = 89
-        Top = 210
+        Top = 234
         Width = 88
         Height = 22
         Caption = 'Add'
         Enabled = False
         TabOrder = 5
       end
-      object GroupBox1: TGroupBox
-        Left = 0
-        Top = 242
-        Width = 177
-        Height = 127
-        Caption = ' Megatexture info '
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clGray
-        Font.Height = -13
-        Font.Name = 'Script'
-        Font.Style = []
-        ParentFont = False
-        TabOrder = 6
-        object StaticText1: TStaticText
-          Left = 0
-          Top = 20
-          Width = 57
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = 'Atlas ID'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clGray
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = []
-          ParentFont = False
-          TabOrder = 0
-        end
-        object EditLmpAtlasID: TStaticText
-          Left = 56
-          Top = 20
-          Width = 113
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' No selected'
-          Color = clBlack
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clSilver
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 1
-        end
-        object EditLmpRegion1: TStaticText
-          Left = 8
-          Top = 64
-          Width = 161
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' No selected'
-          Color = clBlack
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clSilver
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 2
-        end
-        object EditLmpRegion2: TStaticText
-          Left = 8
-          Top = 84
-          Width = 161
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' No selected'
-          Color = clBlack
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clSilver
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 3
-        end
-        object EditLmpRegion3: TStaticText
-          Left = 8
-          Top = 104
-          Width = 161
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' No selected'
-          Color = clBlack
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clSilver
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 4
-        end
-        object EditLmpRegion0: TStaticText
-          Left = 8
-          Top = 40
-          Width = 161
-          Height = 20
-          AutoSize = False
-          BevelInner = bvNone
-          BevelOuter = bvNone
-          BorderStyle = sbsSingle
-          Caption = ' No selected'
-          Color = clBlack
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clSilver
-          Font.Height = -13
-          Font.Name = 'Script'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 5
-        end
-      end
       object TrackBarExp: TTrackBar
-        Left = 64
-        Top = 376
+        Left = 68
+        Top = 286
         Width = 113
         Height = 17
         Ctl3D = False
         Max = 32
         Min = -32
         ParentCtl3D = False
-        TabOrder = 7
+        TabOrder = 6
         ThumbLength = 10
         OnChange = TrackBarExpChange
       end
       object LblLmpUserExp: TStaticText
-        Left = 0
-        Top = 372
+        Left = 4
+        Top = 284
         Width = 33
         Height = 20
         AutoSize = False
@@ -1588,50 +1233,38 @@ object MainForm: TMainForm
         Font.Name = 'Script'
         Font.Style = []
         ParentFont = False
-        TabOrder = 8
+        TabOrder = 7
       end
       object BtnLmpExpZero: TButton
-        Left = 40
-        Top = 376
+        Left = 44
+        Top = 286
         Width = 25
         Height = 17
         Caption = '"0"'
-        TabOrder = 9
+        TabOrder = 8
         OnClick = BtnLmpExpZeroClick
       end
       object CheckBoxModeAtlas: TCheckBox
-        Left = 0
-        Top = 400
-        Width = 145
+        Left = 4
+        Top = 308
+        Width = 125
         Height = 17
-        Caption = 'Draw lightmap Atlas'
+        Caption = 'Show Atlas page'
         Ctl3D = False
-        ParentCtl3D = False
-        TabOrder = 10
-      end
-      object StaticText3: TStaticText
-        Left = 0
-        Top = 420
-        Width = 73
-        Height = 20
-        AutoSize = False
-        BevelInner = bvNone
-        BevelOuter = bvNone
-        BorderStyle = sbsSingle
-        Caption = 'Atlas page'
         Font.Charset = ANSI_CHARSET
-        Font.Color = clGray
+        Font.Color = clSilver
         Font.Height = -13
         Font.Name = 'Script'
         Font.Style = []
+        ParentCtl3D = False
         ParentFont = False
-        TabOrder = 11
+        TabOrder = 9
       end
       object BtnAtlasPage: TSpinButton
-        Left = 112
-        Top = 416
+        Left = 156
+        Top = 308
         Width = 20
-        Height = 25
+        Height = 20
         Ctl3D = False
         DownGlyph.Data = {
           0E010000424D0E01000000000000360000002800000009000000060000000100
@@ -1644,7 +1277,7 @@ object MainForm: TMainForm
           0000000000000000000000808000008080000080800000808000008080000080
           800000808000008080000080800000808000}
         ParentCtl3D = False
-        TabOrder = 12
+        TabOrder = 10
         UpGlyph.Data = {
           0E010000424D0E01000000000000360000002800000009000000060000000100
           200000000000D800000000000000000000000000000000000000008080000080
@@ -1659,9 +1292,9 @@ object MainForm: TMainForm
         OnUpClick = BtnAtlasPageUpClick
       end
       object LblAtlasPage: TStaticText
-        Left = 72
-        Top = 420
-        Width = 33
+        Left = 128
+        Top = 308
+        Width = 25
         Height = 20
         AutoSize = False
         BevelInner = bvNone
@@ -1676,7 +1309,258 @@ object MainForm: TMainForm
         Font.Style = [fsBold]
         ParentColor = False
         ParentFont = False
+        TabOrder = 11
+      end
+      object EditLmpRegion: TStaticText
+        Left = 4
+        Top = 260
+        Width = 173
+        Height = 20
+        AutoSize = False
+        BevelInner = bvNone
+        BevelOuter = bvNone
+        BorderStyle = sbsSingle
+        Caption = ' No selected'
+        Color = clBlack
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clSilver
+        Font.Height = -13
+        Font.Name = 'Script'
+        Font.Style = [fsBold]
+        ParentColor = False
+        ParentFont = False
+        TabOrder = 12
+      end
+      object CBLmpPreviewRGB: TCheckBox
+        Left = 132
+        Top = 444
+        Width = 97
+        Height = 17
+        Hint = 'RGB or EXPx8'
+        Caption = 'RGB'
+        Checked = True
+        ParentShowHint = False
+        ShowHint = True
+        State = cbChecked
         TabOrder = 13
+        OnClick = CBLmpPreviewRGBClick
+      end
+      object EditLmpPixelR: TStaticText
+        Left = 146
+        Top = 360
+        Width = 29
+        Height = 20
+        AutoSize = False
+        BevelInner = bvNone
+        BevelOuter = bvNone
+        BorderStyle = sbsSingle
+        Caption = '0'
+        Color = clBlack
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clSilver
+        Font.Height = -13
+        Font.Name = 'Script'
+        Font.Style = [fsBold]
+        ParentColor = False
+        ParentFont = False
+        TabOrder = 14
+      end
+      object StaticText4: TStaticText
+        Left = 132
+        Top = 360
+        Width = 13
+        Height = 20
+        AutoSize = False
+        BevelInner = bvNone
+        BevelOuter = bvNone
+        Caption = ' r'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clGray
+        Font.Height = -13
+        Font.Name = 'Script'
+        Font.Style = []
+        ParentFont = False
+        TabOrder = 15
+      end
+      object StaticText1: TStaticText
+        Left = 132
+        Top = 380
+        Width = 13
+        Height = 20
+        AutoSize = False
+        BevelInner = bvNone
+        BevelOuter = bvNone
+        Caption = ' g'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clGray
+        Font.Height = -13
+        Font.Name = 'Script'
+        Font.Style = []
+        ParentFont = False
+        TabOrder = 16
+      end
+      object EditLmpPixelG: TStaticText
+        Left = 146
+        Top = 380
+        Width = 29
+        Height = 20
+        AutoSize = False
+        BevelInner = bvNone
+        BevelOuter = bvNone
+        BorderStyle = sbsSingle
+        Caption = '0'
+        Color = clBlack
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clSilver
+        Font.Height = -13
+        Font.Name = 'Script'
+        Font.Style = [fsBold]
+        ParentColor = False
+        ParentFont = False
+        TabOrder = 17
+      end
+      object StaticText6: TStaticText
+        Left = 132
+        Top = 400
+        Width = 13
+        Height = 20
+        AutoSize = False
+        BevelInner = bvNone
+        BevelOuter = bvNone
+        Caption = ' b'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clGray
+        Font.Height = -13
+        Font.Name = 'Script'
+        Font.Style = []
+        ParentFont = False
+        TabOrder = 18
+      end
+      object EditLmpPixelB: TStaticText
+        Left = 146
+        Top = 400
+        Width = 29
+        Height = 20
+        AutoSize = False
+        BevelInner = bvNone
+        BevelOuter = bvNone
+        BorderStyle = sbsSingle
+        Caption = '0'
+        Color = clBlack
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clSilver
+        Font.Height = -13
+        Font.Name = 'Script'
+        Font.Style = [fsBold]
+        ParentColor = False
+        ParentFont = False
+        TabOrder = 19
+      end
+      object StaticText8: TStaticText
+        Left = 132
+        Top = 420
+        Width = 13
+        Height = 20
+        AutoSize = False
+        BevelInner = bvNone
+        BevelOuter = bvNone
+        Caption = ' e'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clGray
+        Font.Height = -13
+        Font.Name = 'Script'
+        Font.Style = []
+        ParentFont = False
+        TabOrder = 20
+      end
+      object EditLmpPixelE: TStaticText
+        Left = 146
+        Top = 420
+        Width = 31
+        Height = 20
+        AutoSize = False
+        BevelInner = bvNone
+        BevelOuter = bvNone
+        BorderStyle = sbsSingle
+        Caption = '0'
+        Color = clBlack
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clSilver
+        Font.Height = -13
+        Font.Name = 'Script'
+        Font.Style = [fsBold]
+        ParentColor = False
+        ParentFont = False
+        TabOrder = 21
+      end
+      object EditLmpBump: TStaticText
+        Left = 88
+        Top = 186
+        Width = 17
+        Height = 20
+        AutoSize = False
+        BevelInner = bvNone
+        BevelOuter = bvNone
+        BorderStyle = sbsSingle
+        Caption = ' 0'
+        Color = clBlack
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clSilver
+        Font.Height = -13
+        Font.Name = 'Script'
+        Font.Style = [fsBold]
+        ParentColor = False
+        ParentFont = False
+        TabOrder = 22
+      end
+      object BtnLmpBump: TSpinButton
+        Left = 108
+        Top = 187
+        Width = 20
+        Height = 20
+        Ctl3D = False
+        DownGlyph.Data = {
+          0E010000424D0E01000000000000360000002800000009000000060000000100
+          200000000000D800000000000000000000000000000000000000008080000080
+          8000008080000080800000808000008080000080800000808000008080000080
+          8000008080000080800000808000000000000080800000808000008080000080
+          8000008080000080800000808000000000000000000000000000008080000080
+          8000008080000080800000808000000000000000000000000000000000000000
+          0000008080000080800000808000000000000000000000000000000000000000
+          0000000000000000000000808000008080000080800000808000008080000080
+          800000808000008080000080800000808000}
+        ParentCtl3D = False
+        TabOrder = 23
+        UpGlyph.Data = {
+          0E010000424D0E01000000000000360000002800000009000000060000000100
+          200000000000D800000000000000000000000000000000000000008080000080
+          8000008080000080800000808000008080000080800000808000008080000080
+          8000000000000000000000000000000000000000000000000000000000000080
+          8000008080000080800000000000000000000000000000000000000000000080
+          8000008080000080800000808000008080000000000000000000000000000080
+          8000008080000080800000808000008080000080800000808000000000000080
+          8000008080000080800000808000008080000080800000808000008080000080
+          800000808000008080000080800000808000}
+        OnDownClick = BtnLmpBumpDownClick
+        OnUpClick = BtnLmpBumpUpClick
+      end
+      object StaticText3: TStaticText
+        Left = 0
+        Top = 186
+        Width = 89
+        Height = 20
+        AutoSize = False
+        BevelInner = bvNone
+        BevelOuter = bvNone
+        BorderStyle = sbsSingle
+        Caption = ' Bump sample'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clGray
+        Font.Height = -13
+        Font.Name = 'Script'
+        Font.Style = []
+        ParentFont = False
+        TabOrder = 24
       end
     end
     object TabSheet4: TTabSheet
@@ -1828,16 +1712,16 @@ object MainForm: TMainForm
     object FileMenu: TMenuItem
       Caption = 'File'
       object LoadMapMenu: TMenuItem
-        Caption = 'Load Map'
+        Caption = 'Load map'
         OnClick = LoadMapMenuClick
       end
       object CloseMapMenu: TMenuItem
-        Caption = 'Close Map'
+        Caption = 'Close map'
         Enabled = False
         OnClick = CloseMapMenuClick
       end
       object SaveMapMenu: TMenuItem
-        Caption = 'Save Map'
+        Caption = 'Save map'
         Enabled = False
         OnClick = SaveMapMenuClick
       end
@@ -1845,18 +1729,18 @@ object MainForm: TMainForm
         Caption = '-'
       end
       object CloseMenu: TMenuItem
-        Caption = 'Close'
+        Caption = 'Exit'
         OnClick = CloseMenuClick
       end
     end
     object OptionsMenu: TMenuItem
       Caption = 'Options'
       object ResetCameraMenu: TMenuItem
-        Caption = 'Reset Camera'
+        Caption = 'Reset camera'
         OnClick = ResetCameraMenuClick
       end
       object ShowOpenGLInformationMenu: TMenuItem
-        Caption = 'Show OpenGL Information'
+        Caption = 'Show OpenGL information'
         OnClick = ShowOpenGLInformationMenuClick
       end
       object LineSplitOptionsMenu: TMenuItem
@@ -1869,22 +1753,22 @@ object MainForm: TMainForm
           OnClick = GotoCamPosSubMenuClick
         end
         object GotoFaceIdSubmenu: TMenuItem
-          Caption = 'Face Id'
+          Caption = 'Face id'
           Enabled = False
           OnClick = GotoFaceIdSubmenuClick
         end
         object GotoVisLeafIdSubMenu: TMenuItem
-          Caption = 'Visleaf Id'
+          Caption = 'Vis-leaf id'
           Enabled = False
           OnClick = GotoVisLeafIdSubMenuClick
         end
         object GotoBModelIdSubMenu: TMenuItem
-          Caption = 'Brush Model Id'
+          Caption = 'BModel id'
           Enabled = False
           OnClick = GotoBModelIdSubMenuClick
         end
         object GotoEntTGNSubMenu: TMenuItem
-          Caption = 'Entity Targetname'
+          Caption = 'Entity targetname'
           Enabled = False
           OnClick = GotoEntTGNSubMenuClick
         end
@@ -1892,70 +1776,74 @@ object MainForm: TMainForm
       object RenderMenu: TMenuItem
         Caption = 'Render'
         object WireframeEntBrushesMenu: TMenuItem
-          Caption = 'Wireframe Entity Brushes'
+          Caption = 'Wireframe entity BModel'
           Enabled = False
           OnClick = WireframeEntBrushesMenuClick
         end
         object WireframeHighlighEntBrushesMenu: TMenuItem
-          Caption = 'Wireframe Highligh Entity Brushes'
+          Caption = 'Wireframe highligh entity BModel'
           Enabled = False
           OnClick = WireframeHighlighEntBrushesMenuClick
         end
         object DrawFaceContourMenu: TMenuItem
-          Caption = 'Draw Face Contour'
+          Caption = 'Draw face contour'
           Enabled = False
           OnClick = DrawFaceContourMenuClick
         end
         object RenderBBOXVisLeaf: TMenuItem
-          Caption = 'Draw BBOX VisLeaf'
+          Caption = 'Draw vis-leafs'
           OnClick = RenderBBOXVisLeafClick
         end
         object DrawTriggersMenu: TMenuItem
-          Caption = 'Draw Triggers'
+          Caption = 'Draw triggers'
           Checked = True
           OnClick = DrawTriggersMenuClick
         end
         object DrawEntityBrushesMenu: TMenuItem
-          Caption = 'Draw Entity Brushes'
+          Caption = 'Draw entity BModel'
           Checked = True
           OnClick = DrawEntityBrushesMenuClick
         end
+        object DrawDispFaceMenu: TMenuItem
+          Caption = 'Draw displacement faces'
+          OnClick = DrawDispFaceMenuClick
+        end
         object BModelRenderColorAlphaMenu: TMenuItem
-          Caption = 'BModel Render Color-Alpha'
+          Caption = 'BModel render color-alpha'
           Checked = True
           OnClick = BModelRenderColorAlphaMenuClick
         end
         object LmpPixelModeMenu: TMenuItem
-          Caption = 'Pixelate Lightmaps'
+          Caption = 'Pixelate lightmaps'
           OnClick = LmpPixelModeMenuClick
         end
         object TexPixelModeMenu: TMenuItem
-          Caption = 'Pixelate Textures'
+          Caption = 'Pixelate textures'
           Enabled = False
           OnClick = TexPixelModeMenuClick
         end
         object DisableLightmapsMenu: TMenuItem
-          Caption = 'Disable Lightmaps'
+          Caption = 'Disable lightmaps'
           Enabled = False
           OnClick = DisableLightmapsMenuClick
         end
         object DisableTexturesMenu: TMenuItem
-          Caption = 'Disable Textures'
+          Caption = 'Disable textures'
           Enabled = False
           OnClick = DisableTexturesMenuClick
         end
       end
       object SetSelectedFaceColorMenu: TMenuItem
-        Caption = 'Set Selected Face Color'
+        Caption = 'Set selected face color'
         OnClick = SetSelectedFaceColorMenuClick
       end
       object SetWireframeFaceColorMenu: TMenuItem
-        Caption = 'Set Wireframe Highlitght Color'
+        Caption = 'Set wireframe highlitght color'
         Enabled = False
         OnClick = SetWireframeFaceColorMenuClick
       end
       object ShowHeaderMenu: TMenuItem
-        Caption = 'Show Header'
+        Caption = 'Show map header'
         OnClick = ShowHeaderMenuClick
       end
       object ShowLightStylesMenu: TMenuItem
@@ -1993,12 +1881,14 @@ object MainForm: TMainForm
     Top = 40
   end
   object SaveDialogVTF: TSaveDialog
-    DefaultExt = 'bmp'
+    DefaultExt = 'vtf'
     Filter = 'VTF Image|*.vtf'
     Left = 72
     Top = 40
   end
-  object SaveDialogDir: TSaveDialog
+  object SaveDialogTGA: TSaveDialog
+    DefaultExt = 'tga'
+    Filter = 'TGA 32-bit Image|*.tga'
     Left = 72
     Top = 72
   end

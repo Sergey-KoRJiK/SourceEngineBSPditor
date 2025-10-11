@@ -20,6 +20,7 @@ uses
   StdCtrls,
   Grids,
   ValEdit,
+  Spin,
   {}
   Math,
   OpenGL,
@@ -39,7 +40,9 @@ uses
   {}
   UnitBSPstruct,
   UnitEntity,
-  UnitVTFMeowLib, Spin;
+  UnitDispMisc,
+  UnitVTFMeowLib,
+  UnitImageTGA;
 
 type
   TMainForm = class(TForm)
@@ -87,7 +90,7 @@ type
     TexPixelModeMenu: TMenuItem;
     DrawEntityBrushesMenu: TMenuItem;
     ShowLightStylesMenu: TMenuItem;
-    SaveDialogDir: TSaveDialog;
+    SaveDialogTGA: TSaveDialog;
     PageControl1: TPageControl;
     TabSheet1: TTabSheet;
     TabSheet2: TTabSheet;
@@ -132,25 +135,6 @@ type
     LabeTexIndex: TStaticText;
     EditTexIndex: TStaticText;
     ButtonDeleteTex: TButton;
-    GroupBoxFaceTexInfo: TGroupBox;
-    LabelFaceTexSx: TStaticText;
-    EditFaceTexSx: TStaticText;
-    LabelFaceTexSy: TStaticText;
-    EditFaceTexSy: TStaticText;
-    LabelFaceTexSz: TStaticText;
-    EditFaceTexSz: TStaticText;
-    LabelFaceTexSShift: TStaticText;
-    EditFaceTexSShift: TStaticText;
-    LabelFaceTexTx: TStaticText;
-    EditFaceTexTx: TStaticText;
-    LabelFaceTexTy: TStaticText;
-    EditFaceTexTy: TStaticText;
-    LabelFaceTexTz: TStaticText;
-    EditFaceTexTz: TStaticText;
-    LabelFaceTexTShift: TStaticText;
-    EditFaceTexTShift: TStaticText;
-    LabelFaceTexFlags: TStaticText;
-    EditFaceTexFlags: TStaticText;
     GroupBoxLightmapInfo: TGroupBox;
     LabelLmpSize: TStaticText;
     EditLmpSize: TStaticText;
@@ -177,20 +161,32 @@ type
     BModelRenderColorAlphaMenu: TMenuItem;
     EditLmpStyle0: TStaticText;
     StaticText2: TStaticText;
-    GroupBox1: TGroupBox;
-    StaticText1: TStaticText;
-    EditLmpAtlasID: TStaticText;
-    EditLmpRegion1: TStaticText;
-    EditLmpRegion2: TStaticText;
-    EditLmpRegion3: TStaticText;
-    EditLmpRegion0: TStaticText;
     TrackBarExp: TTrackBar;
     LblLmpUserExp: TStaticText;
     BtnLmpExpZero: TButton;
     CheckBoxModeAtlas: TCheckBox;
-    StaticText3: TStaticText;
     BtnAtlasPage: TSpinButton;
     LblAtlasPage: TStaticText;
+    EditLmpRegion: TStaticText;
+    ImageLmpPreview: TImage;
+    CBLmpPreviewRGB: TCheckBox;
+    EditLmpPixelR: TStaticText;
+    StaticText4: TStaticText;
+    StaticText1: TStaticText;
+    EditLmpPixelG: TStaticText;
+    StaticText6: TStaticText;
+    EditLmpPixelB: TStaticText;
+    StaticText8: TStaticText;
+    EditLmpPixelE: TStaticText;
+    EditLmpBump: TStaticText;
+    BtnLmpBump: TSpinButton;
+    StaticText3: TStaticText;
+    DrawDispFaceMenu: TMenuItem;
+    StaticText5: TStaticText;
+    EditFaceDispID: TStaticText;
+    StaticText7: TStaticText;
+    EditFaceDispOrigin: TStaticText;
+    MemoFaceVertex: TMemo;
     function  TestRequarementExtensions(): Boolean;
     procedure InitGL();
     procedure InitOrts();
@@ -201,6 +197,7 @@ type
     procedure GetVisleafRenderList();
     procedure do_movement(const Offset: GLfloat);
     procedure GetFaceIndexByRay();
+    procedure UpdatePreviewLightmap();
     procedure UpdateFaceVisualInfo();
     procedure ClearFaceVisualInfo();
     procedure GenerateLightmapMegatexture();
@@ -252,6 +249,12 @@ type
     procedure ButtonSaveLmpClick(Sender: TObject);
     procedure BtnAtlasPageDownClick(Sender: TObject);
     procedure BtnAtlasPageUpClick(Sender: TObject);
+    procedure CBLmpPreviewRGBClick(Sender: TObject);
+    procedure ImageLmpPreviewMouseMove(Sender: TObject; Shift: TShiftState;
+      X, Y: Integer);
+    procedure BtnLmpBumpDownClick(Sender: TObject);
+    procedure BtnLmpBumpUpClick(Sender: TObject);
+    procedure DrawDispFaceMenuClick(Sender: TObject);
   private
     RenderContext       : CRenderingContextManager;
     RenderTimer         : CRenderTimerManager;
@@ -278,10 +281,14 @@ type
     FacePosVBO          : GLuint;
     FaceTexVBO          : GLuint;
     FaceLmpVBO          : array[0..1] of GLuint;
+    FaceLmpCapsVBO      : array[0..1] of GLuint;
     FaceVAO             : array[0..1] of GLuint;
+    DispPosVBO          : GLuint;
+    DispVAO             : GLuint;
     LightmapMegatexture : CMegatextureManager;
     ShaderFaces         : CShaderManager; // World & Entity Faces
     ShaderSFaces        : CShaderManager; // user-selected Face
+    ShaderDisps         : CShaderManager; // Displacements
 
     OrtsVBO, OrtsVAO    : GLuint;
     ShaderOrts          : CShaderManager;
@@ -319,7 +326,7 @@ const
   AboutStr: String = 'Copyright (c) 2025 Sergey-KoRJiK, Belarus' + LF +
     'github.com/Sergey-KoRJiK' + LF +
     'Source BSP Editor and Viewer' + LF +
-    'Program version: 1.1.0' + LF +
+    'Program version: 1.4.1.1' + LF +
     'Version of you OpenGL: ';
   MainFormCaption: String = 'Source BSP Editor and Viewer';
 
@@ -338,15 +345,17 @@ var
   // Lightmap Face options
   SelectedFaceIndex     : Integer = -1;
   SelectedStyle         : Integer = 0;
-  SelectedMipmap        : Integer = 0;
+  SelectedBump          : Integer = 0;
   CurrFaceExt           : PFaceExt = nil;
   CurrTraceInfo         : tTraceInfo;
   //
   BaseThumbnailBMP      : TBitmap;
+  LmpThumbnailBMP       : TBitmap;
 
-  ClusterIndexToRender: Array[0..32767] of Byte;
-  BModelIndexToRender: Array[0..65535] of Byte;
-  locPVS: array[0..32767] of ByteBool; // Clusters !!!
+  ClusterIndexToRender  : AByte;
+  BModelIndexToRender   : AByte;
+  DispIndexToRender     : AByte;
+  locPVS                : array[0..65535] of ByteBool; // Clusters !!!
   //
   isBspLoad: Boolean = False;
   Map: tMapBSP;
@@ -362,7 +371,7 @@ procedure TMainForm.FormCreate(Sender: TObject);
 var
   sLog: String;
 begin
-  {$R-}
+  {$R-} 
   DecimalSeparator:='.'; // for parse entity vector fields
   Self.ProfileTimer:=CQueryPerformanceTimer.CreateTimer();
 
@@ -457,7 +466,8 @@ begin
   ShaderFaces.Uniform3f('entOrigin', 0, 0, 0);
   ShaderFaces.Uniform3f('entAngles', 0, 0, 0);
   ShaderFaces.Uniform4f('fxColorAlpha', 1, 1, 1, 1);
-  ShaderFaces.Uniform2f('fStyleOfs', 0, 0);
+  ShaderFaces.Uniform1f('fStyle', 0);
+  ShaderFaces.Uniform1f('fBump', 0);
   ShaderFaces.Uniform1f('fLightmapExpShift', 0);
   ShaderFaces.FihishUseProgram;
 
@@ -472,12 +482,42 @@ begin
   ShaderSFaces.Uniform4f('fSelColor', 1, 0, 0, 0.3);
   ShaderSFaces.FihishUseProgram;
 
+
+  Self.ShaderDisps:=CShaderManager.CreateManager();
+  sLog:=ShaderDisps.CreateShadersAndProgram(
+    'shaders/DispVERT.cpp', '', 'shaders/DispFRAG.cpp',
+    True, False, True
+  );
+  ShowMessage('Shader Disp Constructor Log:' + #10 + sLog);
+  ShaderDisps.UseProgram;
+  ShaderDisps.Uniform1i('sampler0', 0);
+  ShaderDisps.Uniform3f('entOrigin', 0, 0, 0);
+  ShaderDisps.Uniform3f('entAngles', 0, 0, 0);
+  ShaderDisps.Uniform4f('TexLmp0', 0, 0, 0, 0);
+  ShaderDisps.Uniform4f('TexLmp1', 0, 0, 0, 0);
+  ShaderDisps.Uniform4f('TexLmp2', 0, 0, 0, 0);
+  ShaderDisps.Uniform4f('TexLmp3', 0, 0, 0, 0);
+  ShaderDisps.Uniform1i('iDispSize', 1);
+  ShaderDisps.Uniform4f('fxColorAlpha', 1, 1, 1, 1);
+  ShaderDisps.Uniform4f('fLmpCAPS', 0, 0, 0, 0);
+  ShaderDisps.Uniform1f('fStyle', 0);
+  ShaderDisps.Uniform1f('fBump', 0);
+  ShaderDisps.Uniform1f('fLightmapExpShift', 0);
+  ShaderDisps.FihishUseProgram;
+
   BaseThumbnailBMP:=TBitmap.Create();
   BaseThumbnailBMP.PixelFormat:=pf24bit;
   BaseThumbnailBMP.Width:=128;
   BaseThumbnailBMP.Height:=128;
   BaseThumbnailBMP.Canvas.Brush.Color:=clBlack;
   BaseThumbnailBMP.Canvas.Pen.Color:=clBlack;
+
+  LmpThumbnailBMP:=TBitmap.Create();
+  LmpThumbnailBMP.PixelFormat:=pf24bit;
+  LmpThumbnailBMP.Width:=128;
+  LmpThumbnailBMP.Height:=128;
+  LmpThumbnailBMP.Canvas.Brush.Color:=clBlack;
+  LmpThumbnailBMP.Canvas.Pen.Color:=clBlack;
 
   Self.PanelRTResize(Sender);
   Self.RenderTimer:=CRenderTimerManager.CreateManager();
@@ -492,9 +532,11 @@ begin
   LightmapMegatexture.DeleteManager();
   //BasetextureMng.DeleteManager();
   BaseThumbnailBMP.Destroy();
+  LmpThumbnailBMP.Destroy();
 
   ShaderFaces.DeleteManager;
   ShaderSFaces.DeleteManager;
+  ShaderDisps.DeleteManager;
   Self.FreeOrts();
   Self.FreeCube();
 
@@ -512,9 +554,9 @@ end;
 function TMainForm.TestRequarementExtensions(): Boolean;
 begin
   {$R-}
-  if (IsExistExtension(GL_ARB_multitexture_str) = False) then
+  if TestOpenGLVersion(3, 0) then
     begin
-      ShowMessage(GL_ARB_multitexture_str + ' is not supported!');
+      ShowMessage('Minimal requairement OpenGL version 3.0!');
       Result:=False;
       Exit;
     end; //}
@@ -549,6 +591,8 @@ begin
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND); //}
+
+  glEnable(GL_PROGRAM_POINT_SIZE);
   {$R+}
 end;
 
@@ -776,8 +820,7 @@ begin
 				        @locPVS[0],
 				        Map.VisHdr.nClusters,
 				        Length(Map.VisHdr.vData)
-			        );
-
+			        ); 
               SetBytesByBoolMask(
                 @locPVS[0],
                 @ClusterIndexToRender[0],
@@ -785,24 +828,35 @@ begin
                 RenderFrameIterator or ((not RenderFrameIterator) shl 8)
               );
 
+              FillChar(BModelIndexToRender[0], Length(Map.vBModels), not RenderFrameIterator);
               BModelIndexToRender[0]:=RenderFrameIterator; // worldspawn
-              if (Self.DrawEntityBrushesMenu.Checked) then for i:=0 to Length(Map.vLeafs)-1 do
+              if (Self.DrawEntityBrushesMenu.Checked) then for i:=1 to Length(Map.vLeafs)-1 do
                 begin
                   if (ClusterIndexToRender[Map.vLeafs[i].nCluster] <> RenderFrameIterator) then Continue;
                   for j:=1 to Length(Map.vBModels)-1 do
                     begin
                       if TestIntersectionTwoBBOX3f(Map.vLeafs[i].vBBOX, Map.vBModels[j].vBBOX)
-                      then BModelIndexToRender[j]:=RenderFrameIterator
-                      else BModelIndexToRender[j]:=not RenderFrameIterator
+                      then BModelIndexToRender[j]:=RenderFrameIterator;
                     end;
                 end; //}
-              FillChar(BModelIndexToRender[0], Length(Map.vBModels), RenderFrameIterator);
+
+              FillChar(DispIndexToRender[0], Length(Map.vDisps), not RenderFrameIterator);
+              for i:=1 to Length(Map.vLeafs)-1 do
+                begin
+                  if (ClusterIndexToRender[Map.vLeafs[i].nCluster] <> RenderFrameIterator) then Continue;
+                  for j:=0 to Length(Map.vDisps)-1 do
+                    begin
+                      if TestIntersectionTwoBBOX3f(Map.vLeafs[i].vBBOX, Map.vDisps[j].vBBOX)
+                      then DispIndexToRender[j]:=RenderFrameIterator;
+                    end;
+                end; //}
             end
           else
             begin
               // Call only when camera go out from map, mean from leaf to space,
               FillChar(ClusterIndexToRender[0], Map.VisHdr.nClusters, RenderFrameIterator);
               FillChar(BModelIndexToRender[0], Length(Map.vBModels), RenderFrameIterator);
+              FillChar(DispIndexToRender[0], Length(Map.vDisps), RenderFrameIterator);
             end; //}
           CameraLastLeafId:=CameraLeafId;
 
@@ -853,10 +907,10 @@ begin
     begin
       pfe:=@Map.vFaces[j];
 
-      if (ClusterIndexToRender[pfe.VisClusterId] <> RenderFrameIterator) then Continue;
+      if (ClusterIndexToRender[pfe.VisClusterId] <> RenderFrameIterator) then
+        if (pfe.nDispId < 0)  then Continue;
       if (pfe.isNotRender[FACEDRAW_USER]) then Continue;
-      //if (pfe.isDummyLmp[FACEDRAW_USER]) then Continue;
-      if (pfe.nDispId >= 0) then Continue;
+      if (pfe.nDispId >= 0) and (not Self.DrawDispFaceMenu.Checked) then Continue;
 
       TraceInfo.t:=Dist;
       GetRayFaceIntersection_MollerTrumbore(
@@ -887,8 +941,7 @@ begin
 
           if (BModelIndexToRender[i] <> RenderFrameIterator) then Continue;
           if (pfe.isNotRender[FACEDRAW_USER]) then Continue;
-          //if (pfe.isDummyLmp[FACEDRAW_USER]) then Continue;
-          if (pfe.nDispId >= 0) then Continue;
+          if (pfe.nDispId >= 0) and (not Self.DrawDispFaceMenu.Checked) then Continue;
           if (not Self.DrawTriggersMenu.Checked) then if Map.vBModels[i].isTrigger then Continue;
 
           TraceInfo.t:=Dist;
@@ -927,11 +980,12 @@ end;
 
 procedure TMainForm.GenerateLightmapMegatexture();
 var
-  iFace, iStyle, iBump, iLmpOfs: Integer;
+  iFace, iStyle, iBump, nBump, iLmpOfs, iHDRLDR, iVertex: Integer;
   MegaMemError: eMegaMemError;
   pfe: PFaceExt;
   fullLmpSz: tVec2s;
-  breg, sreg: tSubRegion;
+  RegionOffset: tVec2s;
+  pde: PDispExt;
 begin
   {$R-}
   if (LightmapMegatexture.AllocNewMegaTexture(@MegaMemError) = False) then
@@ -946,42 +1000,42 @@ begin
   LightmapMegatexture.UpdateCurrentBufferFromArray(
     MEGATEXTURE_DUMMY_MEGAID,
     MEGATEXTURE_DUMMY_REGIONID,
-    @MEGATEXTURE_DUMMY_DATA[0]
+    @MEGATEXTURE_DUMMY_DATA[0],
+    nil,
+    nil
   );
 
   // Process LDR Face's, of Exists
-  if Map.bLDR then
+  for iHDRLDR:=FACEDRAW_LDR to FACEDRAW_HDR do
     begin
+      if (iHDRLDR = FACEDRAW_LDR) AND (Map.bLDR = False) then Continue;
+      if (iHDRLDR = FACEDRAW_HDR) AND (Map.bHDR = False) then Continue;
       for iFace:=0 to Length(Map.vFaces)-1 do
         begin          
           pfe:=@Map.vFaces[iFace];
 
-          if (pfe.isNotRender[FACEDRAW_LDR]) then Continue;
-          if (pfe.nDispId >= 0) then Continue;
+          if (pfe.isNotRender[iHDRLDR]) then Continue;
 
-          if (pfe.isDummyLmp[FACEDRAW_LDR]) then
+          if (pfe.isDummyLmp[iHDRLDR]) then
             begin
-              pfe.LmpMegaId[FACEDRAW_LDR]:=MEGATEXTURE_DUMMY_MEGAID;
-              pfe.LmpRegionId[FACEDRAW_LDR][0]:=MEGATEXTURE_DUMMY_REGIONID;
-              pfe.LmpRegionId[FACEDRAW_LDR][1]:=MEGATEXTURE_DUMMY_REGIONID;
-              pfe.LmpRegionId[FACEDRAW_LDR][2]:=MEGATEXTURE_DUMMY_REGIONID;
-              pfe.LmpRegionId[FACEDRAW_LDR][3]:=MEGATEXTURE_DUMMY_REGIONID;
+              pfe.LmpMegaId[iHDRLDR]:=MEGATEXTURE_DUMMY_MEGAID;
+              pfe.LmpRegionId[iHDRLDR]:=MEGATEXTURE_DUMMY_REGIONID;
               LightmapMegatexture.UpdateTextureCoords(
-                pfe.LmpMegaId[FACEDRAW_LDR],
-                pfe.LmpRegionId[FACEDRAW_LDR][0],
-                @Map.vFaceLmpUV[FACEDRAW_LDR][pfe.iFirst],
-                @Map.vFaceLmpUV[FACEDRAW_LDR][pfe.iFirst],
+                pfe.LmpMegaId[iHDRLDR],
+                pfe.LmpRegionId[iHDRLDR],
+                @Map.vFaceLmpUV[iHDRLDR][pfe.iFirst],
+                @Map.vFaceLmpUV[iHDRLDR][pfe.iFirst],
                 pfe.iCount
               );
               Continue;
             end;
 
-          // with light styles, but no bump pages
-          fullLmpSz.x:=pfe.LmpSz[FACEDRAW_LDR].x*pfe.nStyles[FACEDRAW_LDR];
-          fullLmpSz.y:=pfe.LmpSz[FACEDRAW_LDR].y;
+          nBump:=1;
+          if (pfe.isBump[iHDRLDR]) then nBump:=4;
 
-          iBump:=1;
-          if (pfe.isBump[FACEDRAW_LDR]) then iBump:=4;
+          // with light styles and bump's
+          fullLmpSz.x:=pfe.LmpSz[iHDRLDR].x*nBump;
+          fullLmpSz.y:=pfe.LmpSz[iHDRLDR].y*pfe.nStyles[iHDRLDR];
 
           if (LightmapMegatexture.IsCanReserveTexture(fullLmpSz) = False) then
             begin
@@ -994,130 +1048,53 @@ begin
                 end;
             end;
 
-          pfe.LmpMegaId[FACEDRAW_LDR]:=LightmapMegatexture.CurrentMegatextureIndex;
-          for iStyle:=0 to pfe.nStyles[FACEDRAW_LDR]-1 do
+          pfe.LmpMegaId[iHDRLDR]:=LightmapMegatexture.CurrentMegatextureIndex;
+          pfe.LmpRegionId[iHDRLDR]:=LightmapMegatexture.ReserveTexture(fullLmpSz);
+          for iStyle:=0 to pfe.nStyles[iHDRLDR]-1 do
             begin
-              pfe.LmpRegionId[FACEDRAW_LDR][iStyle]:=LightmapMegatexture.ReserveTexture(pfe.LmpSz[FACEDRAW_LDR]);
-              iLmpOfs:=pfe.LmpDataFirst[FACEDRAW_LDR] + iStyle*iBump*pfe.LmpArea[FACEDRAW_LDR];
-
-              if ((iLmpOfs + pfe.LmpArea[FACEDRAW_LDR]) <= Length(Map.vLightmapsLDR))
-              then LightmapMegatexture.UpdateCurrentBufferFromArray(
-                pfe.LmpMegaId[FACEDRAW_LDR],
-                pfe.LmpRegionId[FACEDRAW_LDR][iStyle],
-                @Map.vLightmapsLDR[iLmpOfs]
-              );
-            end;
-
-          breg:=Self.LightmapMegatexture.TextureRegion[
-            pfe.LmpMegaID[FACEDRAW_LDR],
-            pfe.LmpRegionID[FACEDRAW_LDR][0]
-          ];
-          pfe.LmpStyleOfs[FACEDRAW_LDR][0]:=VEC_ZERO_2F;
-          for iStyle:=1 to pfe.nStyles[FACEDRAW_LDR]-1 do
-            begin
-              sreg:=Self.LightmapMegatexture.TextureRegion[
-                pfe.LmpMegaID[FACEDRAW_LDR],
-                pfe.LmpRegionID[FACEDRAW_LDR][iStyle]
-              ];
-              pfe.LmpStyleOfs[FACEDRAW_LDR][iStyle].x:=
-                (sreg.bMin.x - breg.bMin.x)*MEGATEXTURE_STEP;
-              pfe.LmpStyleOfs[FACEDRAW_LDR][iStyle].y:=
-                (sreg.bMin.y - breg.bMin.y)*MEGATEXTURE_STEP;
-            end;
-
-          LightmapMegatexture.UpdateTextureCoords(
-            pfe.LmpMegaId[FACEDRAW_LDR],
-            pfe.LmpRegionId[FACEDRAW_LDR][0],
-            @Map.vFaceLmpUV[FACEDRAW_LDR][pfe.iFirst],
-            @Map.vFaceLmpUV[FACEDRAW_LDR][pfe.iFirst],
-            pfe.iCount
-          );
-        end;
-    end;
-
-  // Process HDR Face's, of Exists
-  if Map.bHDR then
-    begin
-      for iFace:=0 to Length(Map.vFaces)-1 do
-        begin          
-          pfe:=@Map.vFaces[iFace];
-
-          if (pfe.isNotRender[FACEDRAW_HDR]) then Continue;
-          if (pfe.nDispId >= 0) then Continue;
-
-          if (pfe.isDummyLmp[FACEDRAW_HDR]) then
-            begin
-              pfe.LmpMegaId[FACEDRAW_HDR]:=MEGATEXTURE_DUMMY_MEGAID;
-              pfe.LmpRegionId[FACEDRAW_HDR][0]:=MEGATEXTURE_DUMMY_REGIONID;
-              pfe.LmpRegionId[FACEDRAW_HDR][1]:=MEGATEXTURE_DUMMY_REGIONID;
-              pfe.LmpRegionId[FACEDRAW_HDR][2]:=MEGATEXTURE_DUMMY_REGIONID;
-              pfe.LmpRegionId[FACEDRAW_HDR][3]:=MEGATEXTURE_DUMMY_REGIONID;
-              LightmapMegatexture.UpdateTextureCoords(
-                pfe.LmpMegaId[FACEDRAW_HDR],
-                pfe.LmpRegionId[FACEDRAW_HDR][0],
-                @Map.vFaceLmpUV[FACEDRAW_HDR][pfe.iFirst],
-                @Map.vFaceLmpUV[FACEDRAW_HDR][pfe.iFirst],
-                pfe.iCount
-              );
-              Continue;
-            end;
-
-          // with light styles, but no bump pages
-          fullLmpSz.x:=pfe.LmpSz[FACEDRAW_HDR].x*pfe.nStyles[FACEDRAW_HDR];
-          fullLmpSz.y:=pfe.LmpSz[FACEDRAW_HDR].y;
-
-          iBump:=1;
-          if (pfe.isBump[FACEDRAW_HDR]) then iBump:=4;
-
-          if (LightmapMegatexture.IsCanReserveTexture(fullLmpSz) = False) then
-            begin
-              LightmapMegatexture.UpdateTextureFromCurrentBuffer();
-              if (LightmapMegatexture.AllocNewMegaTexture(@MegaMemError) = False) then
+              for iBump:=0 to nBump-1 do
                 begin
-                  ShowMessage(GetMegaMemErrorInfo(MegaMemError));
-                  LightmapMegatexture.Clear();
-                  Exit;
+                  RegionOffset.x:=pfe.LmpSz[iHDRLDR].x*iBump;
+                  RegionOffset.y:=pfe.LmpSz[iHDRLDR].y*iStyle;
+
+                  iLmpOfs:=pfe.LmpByteFirst[iHDRLDR] +
+                    SIZEOF_LIGHTMAP*(iStyle*nBump + iBump)*pfe.LmpArea[iHDRLDR];
+
+                  LightmapMegatexture.UpdateCurrentBufferFromArray(
+                    pfe.LmpMegaId[iHDRLDR],
+                    pfe.LmpRegionId[iHDRLDR],
+                    @Map.vLightmaps[iHDRLDR][iLmpOfs],
+                    @RegionOffset,
+                    @pfe.LmpSz[iHDRLDR]
+                  );
                 end;
             end;
 
-          pfe.LmpMegaId[FACEDRAW_HDR]:=LightmapMegatexture.CurrentMegatextureIndex;
-          for iStyle:=0 to pfe.nStyles[FACEDRAW_HDR]-1 do
-            begin
-              pfe.LmpRegionId[FACEDRAW_HDR][iStyle]:=LightmapMegatexture.ReserveTexture(pfe.LmpSz[FACEDRAW_HDR]);
-              iLmpOfs:=pfe.LmpDataFirst[FACEDRAW_HDR] + iStyle*iBump*pfe.LmpArea[FACEDRAW_HDR];
-
-              if ((iLmpOfs + pfe.LmpArea[FACEDRAW_HDR]) <= Length(Map.vLightmapsHDR))
-              then LightmapMegatexture.UpdateCurrentBufferFromArray(
-                pfe.LmpMegaId[FACEDRAW_HDR],
-                pfe.LmpRegionId[FACEDRAW_HDR][iStyle],
-                @Map.vLightmapsHDR[iLmpOfs]
-              );
-            end;
-
-          breg:=Self.LightmapMegatexture.TextureRegion[
-            pfe.LmpMegaID[FACEDRAW_HDR],
-            pfe.LmpRegionID[FACEDRAW_HDR][0]
-          ];
-          pfe.LmpStyleOfs[FACEDRAW_HDR][0]:=VEC_ZERO_2F;
-          for iStyle:=1 to pfe.nStyles[FACEDRAW_HDR]-1 do
-            begin
-              sreg:=Self.LightmapMegatexture.TextureRegion[
-                pfe.LmpMegaID[FACEDRAW_HDR],
-                pfe.LmpRegionID[FACEDRAW_HDR][iStyle]
-              ];
-              pfe.LmpStyleOfs[FACEDRAW_HDR][iStyle].x:=
-                (sreg.bMin.x - breg.bMin.x)*MEGATEXTURE_STEP;
-              pfe.LmpStyleOfs[FACEDRAW_HDR][iStyle].y:=
-                (sreg.bMin.y - breg.bMin.y)*MEGATEXTURE_STEP;
-            end;
-
+          // for zero lightstyle and nobump, also put region size
           LightmapMegatexture.UpdateTextureCoords(
-            pfe.LmpMegaId[FACEDRAW_HDR],
-            pfe.LmpRegionId[FACEDRAW_HDR][0],
-            @Map.vFaceLmpUV[FACEDRAW_HDR][pfe.iFirst],
-            @Map.vFaceLmpUV[FACEDRAW_HDR][pfe.iFirst],
+            pfe.LmpMegaId[iHDRLDR],
+            pfe.LmpRegionId[iHDRLDR],
+            @Map.vFaceLmpUV[iHDRLDR][pfe.iFirst],
+            @Map.vFaceLmpUV[iHDRLDR][pfe.iFirst],
             pfe.iCount
           );
+          for iVertex:=pfe.iFirst to pfe.iLast do
+            begin
+              Map.vFaceLmpCAPS[iHDRLDR][iVertex].x:=Map.vFaceLmpCAPS[iHDRLDR][iVertex].x*MEGATEXTURE_STEP;
+              Map.vFaceLmpCAPS[iHDRLDR][iVertex].y:=Map.vFaceLmpCAPS[iHDRLDR][iVertex].y*MEGATEXTURE_STEP;
+            end;
+
+          if (pfe.nDispId >= 0) then
+            begin
+              pde:=pfe.pDispExt;
+              LightmapMegatexture.UpdateTextureCoords(
+                pfe.LmpMegaId[iHDRLDR],
+                pfe.LmpRegionId[iHDRLDR],
+                @pde.vLmpUV[iHDRLDR][0],
+                @pde.vLmpUV[iHDRLDR][0],
+                4
+              );
+            end;
         end;
     end;
 
@@ -1129,9 +1106,11 @@ end;
 
 procedure TMainForm.DrawScence(Sender: TObject);
 var
-  i, j: Integer;
+  i, j, k: Integer;
   pfe: PFaceExt;
   vBOrigin: PVec3f;
+  vTmp4: PVec4f;
+  vTmp2A, vTmp2B: PVec2f;
 begin
   {$R-}
   Self.RenderTimer.UpdDeltaTime();
@@ -1149,6 +1128,7 @@ begin
       glPolygonMode(GL_BACK, GL_FILL); // GL_FILL, GL_LINE, GL_POINT
 
       ShaderFaces.UniformMatrix('cameramat', False, 4, 1, @Self.CameraMatrix[0]);
+      ShaderFaces.Uniform1f('fStyle', SelectedStyle);
 
       //glAlphaFunc(GL_GEQUAL, 0.0);
       LightmapMegatexture.UnbindMegatexture2D();
@@ -1173,7 +1153,7 @@ begin
             Map.vBModels[i].vAngles.x,
             Map.vBModels[i].vAngles.y,
             Map.vBModels[i].vAngles.z
-          );
+          ); //}
 
           if (Self.BModelRenderColorAlphaMenu.Checked)
           then ShaderFaces.Uniform4f('fxColorAlpha',
@@ -1187,15 +1167,10 @@ begin
             begin
               pfe:=@Map.vfaces[j];
               if (pfe.isNotRender[FACEDRAW_USER]) then Continue;
-              //if (pfe.isDummyLmp[FACEDRAW_USER]) then Continue;
-              if (pfe.nDispId >= 0) then Continue;
-              if (i = 0) then if (ClusterIndexToRender[pfe.VisClusterId]
-                <> RenderFrameIterator) then Continue;
-
-              ShaderFaces.Uniform2f('fStyleOfs',
-                pfe.LmpStyleOfs[FACEDRAW_USER][SelectedStyle].x,
-                pfe.LmpStyleOfs[FACEDRAW_USER][SelectedStyle].y
-              ); //}
+              if (pfe.nDispId >= 0) and (not Self.DrawDispFaceMenu.Checked) then Continue;
+              if (i = 0) then
+                if (ClusterIndexToRender[pfe.VisClusterId] <> RenderFrameIterator) then
+                  if (pfe.nDispId < 0) then Continue;
 
               LightmapMegatexture.BindMegatexture2D(pfe.LmpMegaId[FACEDRAW_USER]);
               //glDrawArrays(GL_LINE_LOOP, pfe.iFirst, pfe.iCount);
@@ -1208,6 +1183,85 @@ begin
       ShaderFaces.FihishUseProgram;
     end; //}
 
+  // Displacements
+  if (isBspLoad) then if ShaderDisps.UseProgram() then
+    begin
+      glEnable(GL_CULL_FACE); // Enable Face Normal Test
+      glCullFace(GL_FRONT);
+      glPolygonMode(GL_BACK, GL_FILL); // GL_FILL, GL_LINE, GL_POINT
+
+      ShaderDisps.UniformMatrix('cameramat', False, 4, 1, @Self.CameraMatrix[0]);
+      ShaderDisps.Uniform1f('fStyle', SelectedStyle);
+
+      //glAlphaFunc(GL_GEQUAL, 0.0);
+      LightmapMegatexture.UnbindMegatexture2D();
+      glBindVertexArray(DispVAO);
+
+      ShaderDisps.Uniform3f('entOrigin',
+        Map.vBModels[0].vOrigin.x,
+        Map.vBModels[0].vOrigin.y,
+        Map.vBModels[0].vOrigin.z
+      );
+      ShaderDisps.Uniform3f('entAngles',
+        Map.vBModels[0].vAngles.x,
+        Map.vBModels[0].vAngles.y,
+        Map.vBModels[0].vAngles.z
+      );
+
+      for i:=0 to Length(Map.vDisps)-1 do
+        begin
+          if (not Map.vDisps[i].bValid) then Continue;
+          if (DispIndexToRender[i] <> RenderFrameIterator) then Continue;
+
+          ShaderDisps.Uniform1i('iDispSize', Map.vDisps[i].nSize);
+          ShaderDisps.Uniform1i('iDispBase', Map.vDisps[i].iBase);
+          ShaderDisps.Uniform1i('iBaseVertex', Map.vDisps[i].iFirst);
+          vTmp4:=@Map.vFaceLmpCAPS[FACEDRAW_USER][Map.vDisps[i].pRefFace.iFirst];
+          ShaderDisps.Uniform4f('fLmpCAPS', vTmp4.x, vTmp4.y, vTmp4.z, vTmp4.w);
+          for j:=0 to 3 do
+            begin
+              k:=(j + Map.vDisps[i].iBase) mod 4;
+              vTmp2A:=@Map.vFaceTexUV[Map.vDisps[i].pRefFace.iFirst + j];
+              vTmp2B:=@Map.vDisps[i].vLmpUV[FACEDRAW_USER][k];
+              ShaderDisps.Uniform4f('TexLmp' + IntToStr(k),
+                vTmp2A.x,
+                vTmp2A.y,
+                vTmp2B.x,
+                vTmp2B.y
+              );
+            end;  
+
+          LightmapMegatexture.BindMegatexture2D(Map.vDisps[i].pRefFace.LmpMegaId[FACEDRAW_USER]);
+          case (Map.vDisps[i].nPower) of
+            2: glDrawElementsBaseVertex(
+                GL_TRIANGLES,
+                DISP_TRIG_INDEX_COUNT_POWER_2,
+                GL_UNSIGNED_INT,
+                @DISP_TRIG_INDEX_TABLE_POWER_2[0],
+                Map.vDisps[i].iFirst
+              );
+            3: glDrawElementsBaseVertex(
+                GL_TRIANGLES,
+                DISP_TRIG_INDEX_COUNT_POWER_3,
+                GL_UNSIGNED_INT,
+                @DISP_TRIG_INDEX_TABLE_POWER_3[0],
+                Map.vDisps[i].iFirst
+              );
+            4: glDrawElementsBaseVertex(
+                GL_TRIANGLES,
+                DISP_TRIG_INDEX_COUNT_POWER_4,
+                GL_UNSIGNED_INT,
+                @DISP_TRIG_INDEX_TABLE_POWER_4[0],
+                Map.vDisps[i].iFirst
+              );
+          end;
+        end;
+
+      glBindVertexArray(0);
+      LightmapMegatexture.UnbindMegatexture2D();
+      ShaderDisps.FihishUseProgram;
+    end; //}
+
   // selected face
   if (isBspLoad and (SelectedFaceIndex >= 0)) then
     begin
@@ -1215,7 +1269,7 @@ begin
         begin
           if (Self.ShaderSFaces.UseProgram) then
             begin
-              glDisable(GL_CULL_FACE); 
+              glDisable(GL_CULL_FACE);
               glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // GL_FILL, GL_LINE, GL_POINT
 
               vBOrigin:=@Map.vBModels[CurrFaceExt.BModelId].vOrigin;
@@ -1335,7 +1389,8 @@ begin
       ShaderFaces.Uniform3f('entOrigin', 0, 0, 0);
       ShaderFaces.Uniform3f('entAngles', 0, 0, 0);
       ShaderFaces.Uniform4f('fxColorAlpha', 1, 1, 1, 1);
-      ShaderFaces.Uniform2f('fStyleOfs', 0, 0);
+      ShaderFaces.Uniform1f('fStyle', 0);
+      ShaderFaces.Uniform1f('fBump', 0);
 
       LightmapMegatexture.BindMegatexture2D(SelectedAtlasID);
       glBindVertexArray(AtlasVAO);
@@ -1477,6 +1532,33 @@ begin
   {$R+}
 end;
 
+
+procedure TMainForm.UpdatePreviewLightmap();
+var
+  lmpOfs, nBump: Integer;
+begin
+  {$R-}
+  Self.ImageLmpPreview.Picture:=nil;
+  if (isBspLoad = False) then Exit;
+  if SelectedFaceIndex < 0 then Exit;
+  if (Self.RadioGroupLmp.ItemIndex < 0) then Exit;
+
+  nBump:=1;
+  if (CurrFaceExt.isBump[FACEDRAW_USER]) then nBump:=4;
+  LmpOfs:=CurrFaceExt.LmpByteFirst[FACEDRAW_USER] +
+    SIZEOF_LIGHTMAP*(Self.RadioGroupLmp.ItemIndex*nBump + SelectedBump)
+    *CurrFaceExt.LmpArea[FACEDRAW_USER];
+
+  NearestRescaleLightmapToBitmap(
+    @Map.vLightmaps[FACEDRAW_USER][LmpOfs],
+    @CurrFaceExt.LmpSz[FACEDRAW_USER],
+    LmpThumbnailBMP,
+    Self.CBLmpPreviewRGB.Checked
+  );
+  Self.ImageLmpPreview.Canvas.Draw(0, 0, LmpThumbnailBMP);
+  {$R+}
+end;
+
 procedure TMainForm.UpdateFaceVisualInfo();
 var
   i: Integer;
@@ -1496,18 +1578,32 @@ begin
     begin
       pent:=@Map.vEntities[Map.vBModels[CurrFaceExt.BModelId].iEntity];
       Self.EditFaceEntityName.Caption:=pent.TargetName;
+      Self.EditFaceEntityName.Hint:=pent.TargetName;
       Self.EditFaceEntityClass.Caption:=pent.ClassName;
+      Self.EditFaceEntityClass.Hint:=pent.ClassName;
     end;
 
   Self.EditFacePlaneIndex.Caption:=IntToStr(CurrFaceExt.PlaneID);
   Self.EditFaceCountVertex.Caption:=IntToStr(CurrFaceExt.iCount);
   Self.EditFaceTexInfo.Caption:=IntToStr(CurrFaceExt.TexInfoId[FACEDRAW_USER]);
+  Self.EditFaceDispID.Caption:=IntToStr(CurrFaceExt.nDispId);
+  if (CurrFaceExt.pDispExt <> nil) then
+    begin
+      Self.EditFaceDispID.Caption:=Self.EditFaceDispID.Caption
+        + ', ' + IntToStr(PDispExt(CurrFaceExt.pDispExt).nPower);
+      Self.EditFaceDispOrigin.Caption:=IntToStr(PDispExt(CurrFaceExt.pDispExt).iBase);
+      Self.EditFaceDispOrigin.Hint:=Self.EditFaceDispOrigin.Caption;
+    end;
 
   Self.EditFacePlaneX.Caption:=FloatToStr(CurrFaceExt.Plane.Normal.x);
   Self.EditFacePlaneY.Caption:=FloatToStr(CurrFaceExt.Plane.Normal.y);
   Self.EditFacePlaneZ.Caption:=FloatToStr(CurrFaceExt.Plane.Normal.z);
   Self.EditFacePlaneD.Caption:=FloatToStr(CurrFaceExt.Plane.Dist);
   Self.EditFacePlaneF.Caption:=PlaneTypeToStrExt(CurrFaceExt.Plane.AxisType);
+  Self.EditFacePlaneX.Hint:=Self.EditFacePlaneX.Caption;
+  Self.EditFacePlaneY.Hint:=Self.EditFacePlaneY.Caption;
+  Self.EditFacePlaneZ.Hint:=Self.EditFacePlaneZ.Caption;
+  Self.EditFacePlaneD.Hint:=Self.EditFacePlaneD.Caption;
 
   Self.EditLmpSize.Caption:=IntToStr(CurrFaceExt.LmpSz[FACEDRAW_USER].x)
     + 'x' + IntToStr(CurrFaceExt.LmpSz[FACEDRAW_USER].y);
@@ -1517,50 +1613,20 @@ begin
   Self.EditLmpStyle1.Caption:=IntToStr(CurrFaceExt.vStyles[FACEDRAW_USER][1]);
   Self.EditLmpStyle2.Caption:=IntToStr(CurrFaceExt.vStyles[FACEDRAW_USER][2]);
   Self.EditLmpStyle3.Caption:=IntToStr(CurrFaceExt.vStyles[FACEDRAW_USER][3]);
-
-  Self.EditLmpAtlasID.Caption:=IntToStr(CurrFaceExt.LmpMegaID[FACEDRAW_USER]);
+  Self.EditLmpStyle0.Hint:=Self.EditLmpStyle0.Caption;
+  Self.EditLmpStyle1.Hint:=Self.EditLmpStyle1.Caption;
+  Self.EditLmpStyle2.Hint:=Self.EditLmpStyle2.Caption;
+  Self.EditLmpStyle3.Hint:=Self.EditLmpStyle3.Caption;
 
   if (CurrFaceExt.vStyles[FACEDRAW_USER][0] >= 0) then
     begin
       subreg:=Self.LightmapMegatexture.TextureRegion[
         CurrFaceExt.LmpMegaID[FACEDRAW_USER],
-        CurrFaceExt.LmpRegionID[FACEDRAW_USER][0]
+        CurrFaceExt.LmpRegionID[FACEDRAW_USER]
       ];
-      Self.EditLmpRegion0.Caption:=
-        '(' + IntToStr(subreg.bMin.x) + ',' + IntToStr(subreg.bMin.y) + ') ('
-        + IntToStr(subreg.bMax.x + 1) + ',' + IntToStr(subreg.bMax.y + 1) + ')';
-    end;
-
-  if (CurrFaceExt.vStyles[FACEDRAW_USER][1] > 0) then
-    begin
-      subreg:=Self.LightmapMegatexture.TextureRegion[
-        CurrFaceExt.LmpMegaID[FACEDRAW_USER],
-        CurrFaceExt.LmpRegionID[FACEDRAW_USER][1]
-      ];
-      Self.EditLmpRegion1.Caption:=
-        '(' + IntToStr(subreg.bMin.x) + ',' + IntToStr(subreg.bMin.y) + ') ('
-        + IntToStr(subreg.bMax.x + 1) + ',' + IntToStr(subreg.bMax.y + 1) + ')';
-    end;
-
-  if (CurrFaceExt.vStyles[FACEDRAW_USER][2] > 0) then
-    begin
-      subreg:=Self.LightmapMegatexture.TextureRegion[
-        CurrFaceExt.LmpMegaID[FACEDRAW_USER],
-        CurrFaceExt.LmpRegionID[FACEDRAW_USER][2]
-      ];
-      Self.EditLmpRegion2.Caption:=
-        '(' + IntToStr(subreg.bMin.x) + ',' + IntToStr(subreg.bMin.y) + ') ('
-        + IntToStr(subreg.bMax.x + 1) + ',' + IntToStr(subreg.bMax.y + 1) + ')';
-    end;
-
-  if (CurrFaceExt.vStyles[FACEDRAW_USER][3] > 0) then
-    begin
-      subreg:=Self.LightmapMegatexture.TextureRegion[
-        CurrFaceExt.LmpMegaID[FACEDRAW_USER],
-        CurrFaceExt.LmpRegionID[FACEDRAW_USER][3]
-      ];
-      Self.EditLmpRegion3.Caption:=
-        '(' + IntToStr(subreg.bMin.x) + ',' + IntToStr(subreg.bMin.y) + ') ('
+      Self.EditLmpRegion.Caption:=
+        IntToStr(CurrFaceExt.LmpMegaID[FACEDRAW_USER]) +
+        ' (' + IntToStr(subreg.bMin.x) + ',' + IntToStr(subreg.bMin.y) + ') ('
         + IntToStr(subreg.bMax.x + 1) + ',' + IntToStr(subreg.bMax.y + 1) + ')';
     end;
 
@@ -1570,7 +1636,19 @@ begin
         IntToStr(CurrFaceExt.vStyles[FACEDRAW_USER][i])
       );
     end;
-  Self.RadioGroupLmp.ItemIndex:=CurrFaceExt.nStyles[FACEDRAW_USER]-1;
+  Self.RadioGroupLmp.ItemIndex:=0;
+
+  Self.MemoFaceVertex.Clear;
+  for i:=0 to CurrFaceExt.iCount-1 do
+    begin
+      Self.MemoFaceVertex.Lines.Append(
+        VecToStr(Map.vFaceVertices[CurrFaceExt.iFirst + i])
+      );
+    end;
+
+  SelectedBump:=0;
+  Self.EditLmpBump.Caption:=' 0';
+  Self.UpdatePreviewLightmap;
   {$R+}
 end;
 
@@ -1584,22 +1662,14 @@ begin
   Self.EditFacePlaneIndex.Caption:='';
   Self.EditFaceCountVertex.Caption:='';
   Self.EditFaceTexInfo.Caption:='';
+  Self.EditFaceDispID.Caption:='';
+  Self.EditFaceDispOrigin.Caption:='';
 
   Self.EditFacePlaneX.Caption:='';
   Self.EditFacePlaneY.Caption:='';
   Self.EditFacePlaneZ.Caption:='';
   Self.EditFacePlaneD.Caption:='';
   Self.EditFacePlaneF.Caption:='';
-
-  Self.EditFaceTexSx.Caption:='';
-  Self.EditFaceTexSy.Caption:='';
-  Self.EditFaceTexSz.Caption:='';
-  Self.EditFaceTexSShift.Caption:='';
-  Self.EditFaceTexTx.Caption:='';
-  Self.EditFaceTexTy.Caption:='';
-  Self.EditFaceTexTz.Caption:='';
-  Self.EditFaceTexTShift.Caption:='';
-  Self.EditFaceTexFlags.Caption:='';
 
   Self.EditTexIndex.Caption:='';
   Self.EditTexName.Caption:='';
@@ -1616,11 +1686,17 @@ begin
   Self.EditFaceTexUV.Caption:='';
   Self.EditFaceLmpUV.Caption:='';
 
-  Self.EditLmpAtlasID.Caption:='';
-  Self.EditLmpRegion0.Caption:='';
-  Self.EditLmpRegion1.Caption:='';
-  Self.EditLmpRegion2.Caption:='';
-  Self.EditLmpRegion3.Caption:='';
+  Self.EditLmpRegion.Caption:='';
+  Self.ImageLmpPreview.Picture:=nil;
+  Self.EditLmpPixelR.Caption:='';
+  Self.EditLmpPixelG.Caption:='';
+  Self.EditLmpPixelB.Caption:='';
+  Self.EditLmpPixelE.Caption:='';
+
+  SelectedBump:=0;
+  Self.EditLmpBump.Caption:='';
+
+  Self.MemoFaceVertex.Clear;
 
   Self.RadioGroupLmp.Items.Clear();
   Self.Update();
@@ -1630,12 +1706,12 @@ end;
 
 procedure TMainForm.LoadMapMenuClick(Sender: TObject);
 const
-  AtlasVertexData: array[0..(((3 + 2 + 2)*4) - 1)] of GLfloat = (
-    // Positions      TexCoords   LmpCoord
-    -1.0, -1.0, 0.0,  0.0, 1.0,   0.0, 1.0,// Bottom Right
-    -1.0,  1.0, 0.0,  0.0, 0.0,   0.0, 0.0,// Bottom Left
-     1.0,  1.0, 0.0,  1.0, 0.0,   1.0, 0.0,// Top Left
-     1.0, -1.0, 0.0,  1.0, 1.0,   1.0, 1.0 // Top Right
+  AtlasVertexData: array[0..(((3 + 2 + 2 + 4)*4) - 1)] of GLfloat = (
+    // Positions      TexCoords   LmpCoord    LmpCAPS
+    -1.0, -1.0, 0.0,  0.0, 1.0,   0.0, 1.0,   0, 0, 0, 0, // Bottom Right
+    -1.0,  1.0, 0.0,  0.0, 0.0,   0.0, 0.0,   0, 0, 0, 0, // Bottom Left
+     1.0,  1.0, 0.0,  1.0, 0.0,   1.0, 0.0,   0, 0, 0, 0, // Top Left
+     1.0, -1.0, 0.0,  1.0, 1.0,   1.0, 1.0,   0, 0, 0, 0  // Top Right
   );
 begin
   {$R-}
@@ -1662,6 +1738,7 @@ begin
           Self.Caption:=Self.OpenDialogBsp.FileName;
           Self.SelectedAtlasID:=0;
           Self.LblAtlasPage.Caption:=' 0';
+          Self.DrawTriggersMenu.Checked:=False;
 
           FirstSpawnEntityId:=FindFirstSpawnEntity(@Map.vEntities[0], Length(Map.vEntities));
           if (FirstSpawnEntityId >= 1) then
@@ -1673,13 +1750,13 @@ begin
               );
             end;
 
-          FillChar(ClusterIndexToRender[0], 32768, not RenderFrameIterator);
-          FillChar(BModelIndexToRender[0], 65535, not RenderFrameIterator);
-          FacePosVBO:=0;
-          FaceTexVBO:=0;
-          FaceLmpVBO[FACEDRAW_LDR]:=0;
-          FaceLmpVBO[FACEDRAW_HDR]:=0;
-          
+          SetLength(ClusterIndexToRender, Map.VisHdr.nClusters);
+          SetLength(BModelIndexToRender, Length(Map.vBModels));
+          SetLength(DispIndexToRender, Length(Map.vDisps));
+          FillChar(ClusterIndexToRender[0], Map.VisHdr.nClusters, not RenderFrameIterator);
+          FillChar(BModelIndexToRender[0], Length(Map.vBModels), not RenderFrameIterator);
+          FillChar(DispIndexToRender[0], Length(Map.vDisps), not RenderFrameIterator);
+
           //Self.GenerateBasetextures();
           Self.GenerateLightmapMegatexture();
 
@@ -1720,13 +1797,16 @@ begin
           glBindBufferARB(GL_ARRAY_BUFFER, AtlasVBO);
           // Attrib 0 - Atlas positions, 3 floats
 		      glEnableVertexAttribArrayARB(0);
-		      glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 7*4, nil);
+		      glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, (3+2+2+4)*4, nil);
 		      // Attrib 1 - Atlas Tex UV, 2 floats
 		      glEnableVertexAttribArrayARB(1);
-		      glVertexAttribPointerARB(1, 2, GL_FLOAT, GL_FALSE, 7*4, Pointer(3*4));
-		      // Attrib 1 - Atlas Lmp UV, 2 floats
+		      glVertexAttribPointerARB(1, 2, GL_FLOAT, GL_FALSE, (3+2+2+4)*4, Pointer(3*4));
+		      // Attrib 2 - Atlas Lmp UV, 2 floats
 		      glEnableVertexAttribArrayARB(2);
-		      glVertexAttribPointerARB(2, 2, GL_FLOAT, GL_FALSE, 7*4, Pointer(5*4));
+		      glVertexAttribPointerARB(2, 2, GL_FLOAT, GL_FALSE, (3+2+2+4)*4, Pointer((3+2)*4));
+		      // Attrib 3 - Atlas Lmp CAPS, 4 floats
+		      glEnableVertexAttribArrayARB(3);
+		      glVertexAttribPointerARB(3, 4, GL_FLOAT, GL_FALSE, (3+2+2+4)*4, Pointer((3+2+2)*4));
           //
           glBindBufferARB(GL_ARRAY_BUFFER, 0);
           glBindVertexArray(0);
@@ -1742,6 +1822,17 @@ begin
                 GL_ARRAY_BUFFER,
                 Length(Map.vFaceLmpUV[FACEDRAW_LDR])*SizeOf(tVec2f),
                 @Map.vFaceLmpUV[FACEDRAW_LDR][0],
+                GL_STATIC_DRAW
+              );
+              glBindBufferARB(GL_ARRAY_BUFFER, 0);
+
+              // LDR LmpCAPS
+              glGenBuffersARB(1, @FaceLmpCapsVBO[FACEDRAW_LDR]);
+              glBindBufferARB(GL_ARRAY_BUFFER, FaceLmpCapsVBO[FACEDRAW_LDR]);
+              glBufferDataARB(
+                GL_ARRAY_BUFFER,
+                Length(Map.vFaceLmpCAPS[FACEDRAW_LDR])*SizeOf(tVec4f),
+                @Map.vFaceLmpCAPS[FACEDRAW_LDR][0],
                 GL_STATIC_DRAW
               );
               glBindBufferARB(GL_ARRAY_BUFFER, 0);
@@ -1768,6 +1859,12 @@ begin
               glVertexAttribPointerARB(2, 2, GL_FLOAT, GL_FALSE, 0, nil);
               //glVertexAttribDivisorARB(2, 0);
 
+              // Attrib 3 - Face LmpCAPS, 4 floats
+              glBindBufferARB(GL_ARRAY_BUFFER, FaceLmpCapsVBO[FACEDRAW_LDR]);
+              glEnableVertexAttribArrayARB(3);
+              glVertexAttribPointerARB(3, 4, GL_FLOAT, GL_FALSE, 0, nil);
+              //glVertexAttribDivisorARB(2, 0);
+
               glBindBufferARB(GL_ARRAY_BUFFER, 0);
               glBindVertexArray(0);
 
@@ -1784,6 +1881,17 @@ begin
                 GL_ARRAY_BUFFER,
                 Length(Map.vFaceLmpUV[FACEDRAW_HDR])*SizeOf(tVec2f),
                 @Map.vFaceLmpUV[FACEDRAW_HDR][0],
+                GL_STATIC_DRAW
+              );
+              glBindBufferARB(GL_ARRAY_BUFFER, 0);
+
+              // HDR LmpCAPS
+              glGenBuffersARB(1, @FaceLmpCapsVBO[FACEDRAW_HDR]);
+              glBindBufferARB(GL_ARRAY_BUFFER, FaceLmpCapsVBO[FACEDRAW_HDR]);
+              glBufferDataARB(
+                GL_ARRAY_BUFFER,
+                Length(Map.vFaceLmpCAPS[FACEDRAW_HDR])*SizeOf(tVec4f),
+                @Map.vFaceLmpCAPS[FACEDRAW_HDR][0],
                 GL_STATIC_DRAW
               );
               glBindBufferARB(GL_ARRAY_BUFFER, 0);
@@ -1810,10 +1918,41 @@ begin
               glVertexAttribPointerARB(2, 2, GL_FLOAT, GL_FALSE, 0, nil);
               //glVertexAttribDivisorARB(2, 0);
 
+              // Attrib 3 - Face LmpCAPS, 4 floats
+              glBindBufferARB(GL_ARRAY_BUFFER, FaceLmpCapsVBO[FACEDRAW_HDR]);
+              glEnableVertexAttribArrayARB(3);
+              glVertexAttribPointerARB(3, 4, GL_FLOAT, GL_FALSE, 0, nil);
+              //glVertexAttribDivisorARB(2, 0);
+
               glBindBufferARB(GL_ARRAY_BUFFER, 0);
               glBindVertexArray(0);
               Self.LabelLDRHDR.Caption:='HDR';
             end;
+
+          // generate displacement draw data
+          // load disp vertex-alpha data
+          glGenBuffersARB(1, @DispPosVBO);
+          glBindBufferARB(GL_ARRAY_BUFFER, DispPosVBO);
+          glBufferDataARB(
+            GL_ARRAY_BUFFER,
+            Length(Map.vDispVertAlpha)*SizeOf(tVec4f),
+            @Map.vDispVertAlpha[0],
+            GL_STATIC_DRAW
+          );
+          glBindVertexArray(0);
+
+          // Create Disp VAO
+          glGenVertexArrays(1, @DispVAO);
+          glBindVertexArray(DispVAO);
+
+          // Attrib 0 - Disp positions-alphas, 4 floats
+          glBindBufferARB(GL_ARRAY_BUFFER, DispPosVBO);
+          glEnableVertexAttribArrayARB(0);
+          glVertexAttribPointerARB(0, 4, GL_FLOAT, GL_FALSE, 0, nil);
+          //glVertexAttribDivisorARB(0, 0);
+
+          glBindBufferARB(GL_ARRAY_BUFFER, 0);
+          glBindVertexArray(0);
         end;
     end;
   {$R+}
@@ -1845,20 +1984,27 @@ begin
   glDeleteVertexArrays(1, @FaceVAO[FACEDRAW_LDR]);
   glDeleteVertexArrays(1, @FaceVAO[FACEDRAW_HDR]);
   glDeleteVertexArrays(1, @AtlasVAO);
+  glDeleteVertexArrays(1, @DispVAO);
   glDeleteBuffersARB(1, @FacePosVBO);
   glDeleteBuffersARB(1, @FaceTexVBO);
   glDeleteBuffersARB(1, @FaceLmpVBO[FACEDRAW_LDR]);
   glDeleteBuffersARB(1, @FaceLmpVBO[FACEDRAW_HDR]);
+  glDeleteBuffersARB(1, @FaceLmpCapsVBO[FACEDRAW_LDR]);
+  glDeleteBuffersARB(1, @FaceLmpCapsVBO[FACEDRAW_HDR]);
   glDeleteBuffersARB(1, @AtlasVBO);
+  glDeleteBuffersARB(1, @DispPosVBO);
 
   CameraLeafId:=0;
   CameraLastLeafId:=0;
   FirstSpawnEntityId:=0;
   SelectedFaceIndex:=-1;
   SelectedStyle:=0;
-  SelectedMipmap:=0;
+  SelectedBump:=0;
   lpCameraLeaf:=nil;
   CurrFaceExt:=nil;
+  SetLength(Unit1.ClusterIndexToRender, 0);
+  SetLength(Unit1.BModelIndexToRender, 0);
+  SetLength(Unit1.DispIndexToRender, 0);
 
   Self.LabelCameraLeafId.Caption:='No map load';
   Self.LabelStylePage.Caption:='Style page (0..3): 0';
@@ -1943,7 +2089,11 @@ begin
     begin
       ShowMessage(
           'Entities (with "worldspawn"): ' + IntToStr(Length(Map.vEntities)) + LF
-        + 'Lightmap 1024x1024 Megatextures: ' + IntToStr(LightmapMegatexture.CountMegatextures)
+        + 'Lightmap 1024x1024 Megatextures: ' + IntToStr(LightmapMegatexture.CountMegatextures) + LF
+        + 'Lightmap textures: ' + IntToStr(LightmapMegatexture.TotalInsertedTextures) + LF
+        + 'Total face vertices: ' + IntToStr(Map.nTotalFaceVertex) + LF
+        + 'is LDR lightmaps: ' + BoolToStr(Map.bLDR) + LF
+        + 'is HDR lightmaps: ' + BoolToStr(Map.bHDR) + LF
       );
     end;
   {$R+}
@@ -2037,6 +2187,16 @@ procedure TMainForm.DrawEntityBrushesMenuClick(Sender: TObject);
 begin
   {$R-}
   Self.DrawEntityBrushesMenu.Checked:=not Self.DrawEntityBrushesMenu.Checked;
+  SelectedFaceIndex:=-1;
+  CurrFaceExt:=nil;
+  Self.ClearFaceVisualInfo();
+  {$R+}
+end;
+
+procedure TMainForm.DrawDispFaceMenuClick(Sender: TObject);
+begin
+  {$R-}
+  Self.DrawDispFaceMenu.Checked:=not Self.DrawDispFaceMenu.Checked;
   SelectedFaceIndex:=-1;
   CurrFaceExt:=nil;
   Self.ClearFaceVisualInfo();
@@ -2222,6 +2382,9 @@ begin
 end;
 
 procedure TMainForm.ButtonSaveLmpClick(Sender: TObject);
+var
+  Targa: CImageManagerTGA;
+  lmpOfs: Integer;
 begin
   {$R-}
   if (isBspLoad = False) then Exit;
@@ -2231,7 +2394,27 @@ begin
     or (Self.RadioGroupLmp.ItemIndex >= CurrFaceExt.nStyles[FACEDRAW_USER])
     then Exit;
 
-  
+  if (Self.SaveDialogTGA.Execute) then
+    begin
+      lmpOfs:=CurrFaceExt.LmpByteFirst[FACEDRAW_USER];
+      if (CurrFaceExt.isBump[FACEDRAW_USER])
+      then lmpOfs:=lmpOfs + 4*SIZEOF_LIGHTMAP*Self.RadioGroupLmp.ItemIndex*CurrFaceExt.LmpArea[FACEDRAW_USER]
+      else lmpOfs:=lmpOfs + 1*SIZEOF_LIGHTMAP*Self.RadioGroupLmp.ItemIndex*CurrFaceExt.LmpArea[FACEDRAW_USER];
+
+      lmpOfs:=lmpOfs + SIZEOF_LIGHTMAP*SelectedBump*CurrFaceExt.LmpArea[FACEDRAW_USER];
+
+      Targa:=CImageManagerTGA.CreateManager;
+      Targa.ReserveImage(
+        CurrFaceExt.LmpSz[FACEDRAW_USER].x,
+        CurrFaceExt.LmpSz[FACEDRAW_USER].y,
+        True
+      );
+
+      Targa.CopyFromRGBA(@Map.vLightmaps[FACEDRAW_USER][lmpOfs]);
+      Targa.SaveToFile(Self.SaveDialogTGA.FileName);
+
+      Targa.DeleteManager;
+    end;
   {$R+}
 end;
 
@@ -2251,8 +2434,75 @@ begin
   Inc(Self.SelectedAtlasID);
   if (Self.SelectedAtlasID >= Self.LightmapMegatexture.CountMegatextures)
   then Self.SelectedAtlasID:=Self.LightmapMegatexture.CountMegatextures-1;
+  if (Self.SelectedAtlasID < 0) then Self.SelectedAtlasID:=0;
 
   Self.LblAtlasPage.Caption:=IntToStr(Self.SelectedAtlasID);
+  {$R+}
+end;
+
+procedure TMainForm.CBLmpPreviewRGBClick(Sender: TObject);
+begin
+  {$R-}
+  Self.UpdatePreviewLightmap;
+  {$R+}
+end;
+
+procedure TMainForm.ImageLmpPreviewMouseMove(Sender: TObject;
+  Shift: TShiftState; X, Y: Integer);
+var
+  lmpColor: TColor;
+begin
+  {$R-}
+  if (Self.ImageLmpPreview.Picture = nil) then Exit;
+
+  lmpColor:=Self.ImageLmpPreview.Canvas.Pixels[X, Y];
+  if (Self.CBLmpPreviewRGB.Checked) then
+    begin
+      Self.EditLmpPixelR.Caption:=IntToStr(GetRValue(lmpColor));
+      Self.EditLmpPixelG.Caption:=IntToStr(GetRValue(lmpColor));
+      Self.EditLmpPixelB.Caption:=IntToStr(GetRValue(lmpColor));
+      Self.EditLmpPixelE.Caption:=' - ';
+    end
+  else
+    begin
+      Self.EditLmpPixelR.Caption:=' - ';
+      Self.EditLmpPixelG.Caption:=' - ';
+      Self.EditLmpPixelB.Caption:=' - ';
+      Self.EditLmpPixelE.Caption:=IntToStr((GetRValue(lmpColor) - 128) div 8);
+    end;
+  {$R+}
+end;
+
+procedure TMainForm.BtnLmpBumpDownClick(Sender: TObject);
+begin
+  {$R-}
+  if (isBspLoad = False) then Exit;
+  if (Unit1.SelectedFaceIndex < 0) then Exit;
+
+  Dec(SelectedBump);
+  if (SelectedBump < 0) then SelectedBump:=0;
+
+  Self.EditLmpBump.Caption:=IntToStr(SelectedBump);
+  Self.UpdatePreviewLightmap;
+  {$R+}
+end;
+
+procedure TMainForm.BtnLmpBumpUpClick(Sender: TObject);
+var
+  nBump: Integer;
+begin
+  {$R-}
+  if (isBspLoad = False) then Exit;
+  if (Unit1.SelectedFaceIndex < 0) then Exit;
+
+  Inc(SelectedBump);
+
+  nBump:=1;
+  if (CurrFaceExt.isBump[FACEDRAW_USER]) then nBump:=4;
+  if (SelectedBump >= nBump) then SelectedBump:=nBump-1;
+
+  Self.EditLmpBump.Caption:=IntToStr(SelectedBump);
+  Self.UpdatePreviewLightmap;
   {$R+}
 end;
 
